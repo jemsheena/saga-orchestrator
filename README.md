@@ -1,3 +1,5 @@
+[![Build](https://github.com/jemsheena/saga-orchestrator/actions/workflows/build.yml/badge.svg)](https://github.com/jemsheena/saga-orchestrator/actions/workflows/build.yml)
+
 # Distributed Saga Orchestrator
 
 An event-sourced, CQRS-backed saga orchestration engine built in Java, designed to coordinate multi-step distributed transactions with automatic compensation on failure — without any participant service ever needing to know about the others.
