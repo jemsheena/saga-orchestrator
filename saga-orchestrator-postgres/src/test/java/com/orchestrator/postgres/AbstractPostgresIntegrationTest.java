@@ -54,10 +54,16 @@ abstract class AbstractPostgresIntegrationTest {
         }
         // Simple statement splitting on ';' - adequate for these two migration
         // files (no stored procedures/functions containing embedded semicolons).
+        // Remove standalone comments first: otherwise the first CREATE TABLE
+        // statement in each migration would be part of a chunk that begins with
+        // "--" and would be skipped along with the comment.
+        String executableSql = sql.lines()
+                .filter(line -> !line.trim().startsWith("--"))
+                .collect(java.util.stream.Collectors.joining("\n"));
         try (Statement statement = connection.createStatement()) {
-            for (String rawStatement : sql.split(";")) {
+            for (String rawStatement : executableSql.split(";")) {
                 String trimmed = rawStatement.trim();
-                if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
+                if (!trimmed.isEmpty()) {
                     statement.execute(trimmed);
                 }
             }
