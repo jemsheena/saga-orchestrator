@@ -8,6 +8,7 @@ import com.orchestrator.core.event.SagaCompleted;
 import com.orchestrator.core.event.SagaDomainEvent;
 import com.orchestrator.core.event.SagaFailed;
 import com.orchestrator.core.event.SagaStarted;
+import com.orchestrator.core.event.SagaTimedOut;
 import com.orchestrator.core.event.StepCompleted;
 import com.orchestrator.core.event.StepFailed;
 import com.orchestrator.core.exception.DefinitionMismatchException;
@@ -324,6 +325,11 @@ public final class SagaInstance {
             }
             case CompensationStepCompleted e -> compensationCursor = e.compensationCursor() - 1;
             case SagaFailed e -> state = SagaState.FAILED;
+            case SagaTimedOut e -> {
+                // Purely informational/audit — timeout itself doesn't change state.
+                // The actual state transition is carried by whichever event follows it
+                // (SagaFailed or SagaCompensationStarted), exactly like StepFailed.
+            }
         }
         version++;
     }
@@ -420,6 +426,49 @@ public final class SagaInstance {
         transitionTo(SagaState.COMPENSATING);
         recordEvent(new CompensationStepCompleted(sagaId, stepName, compensationCursor, now()));
         compensationCursor--;
+    }
+
+    /**
+     * Records that this saga has exceeded its timeout deadline. This is the
+     * entry point for timeout-driven compensation, with the same two outcomes
+     * as {@link #failCurrentStep}: either straight-to-FAILED if no steps have
+     * completed yet, or entering COMPENSATING to undo already-completed steps.
+     *
+     * <p>This method is called by the scheduler/timeout processor after
+     * detecting an expired saga in the CQRS projection. It remains validation-free
+     * and state-transition logic-free — just like all business methods, it records
+     * domain events; the scheduler is responsible for loading, calling this,
+     * and persisting the result.
+     *
+     * @param definition the saga definition to evaluate against — must match
+     *                    this instance's pinned {@link #definitionReference()}
+     * @throws DefinitionMismatchException if {@code definition} is not the pinned version
+     * @throws InvalidStateTransitionException if the instance is already in a terminal state
+     */
+    public void handleTimeout(SagaDefinition definition) {
+        validateDefinition(definition);
+
+        if (isTerminal()) {
+            // Saga already finished, no timeout needed — scheduler should have
+            // filtered this out using the CQRS projection, but be defensive.
+            return;
+        }
+
+        boolean anyStepCompleted = currentStepIndex > 0;
+
+        if (!anyStepCompleted) {
+            // No steps completed yet, go straight to FAILED
+            transitionTo(SagaState.FAILED);
+            recordEvent(new SagaTimedOut(sagaId, now()));
+            recordEvent(new SagaFailed(sagaId, now()));
+            return;
+        }
+
+        // At least one step completed, enter compensation
+        transitionTo(SagaState.COMPENSATING);
+        this.compensationCursor = currentStepIndex - 1;
+        recordEvent(new SagaTimedOut(sagaId, now()));
+        recordEvent(new SagaCompensationStarted(sagaId, compensationCursor, now()));
     }
 
     /**

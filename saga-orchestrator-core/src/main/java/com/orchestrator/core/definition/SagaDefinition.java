@@ -32,6 +32,7 @@ public final class SagaDefinition {
     private final String sagaType;
     private final int version;
     private final List<SagaStep> steps;
+    private final TimeoutPolicy timeoutPolicy;
 
     private SagaDefinition(Builder builder) {
         this.sagaType = builder.sagaType;
@@ -42,6 +43,7 @@ public final class SagaDefinition {
         // meant to be cached and shared across every SagaInstance of that type —
         // a single accidental mutation would corrupt every in-flight saga.
         this.steps = Collections.unmodifiableList(new ArrayList<>(builder.steps));
+        this.timeoutPolicy = builder.timeoutPolicy;
     }
 
     public String sagaType() {
@@ -77,6 +79,15 @@ public final class SagaDefinition {
     }
 
     /**
+     * @return the timeout policy for this saga, if configured; {@code null} if
+     *         timeout handling is not enabled for this definition. A null timeout
+     *         means the saga will run indefinitely unless explicitly terminated.
+     */
+    public TimeoutPolicy timeoutPolicy() {
+        return timeoutPolicy;
+    }
+
+    /**
      * Derives this definition's identity reference — the {@code (sagaType, version)}
      * pair that a {@code SagaInstance} pins itself to at construction time and
      * validates every subsequent operation against. See {@link SagaDefinitionReference}
@@ -95,6 +106,7 @@ public final class SagaDefinition {
         private final String sagaType;
         private int version = 1;
         private final List<SagaStep> steps = new ArrayList<>();
+        private TimeoutPolicy timeoutPolicy = null;
 
         private Builder(String sagaType) {
             Objects.requireNonNull(sagaType, "sagaType must not be null");
@@ -123,6 +135,19 @@ public final class SagaDefinition {
                 }
             }
             steps.add(step);
+            return this;
+        }
+
+        /**
+         * Sets the timeout policy for this saga definition. If not set, timeouts
+         * are disabled (no automatic compensation on deadline expiration).
+         *
+         * @param timeoutPolicy the policy defining timeout behavior; may be null
+         *                       to disable timeouts
+         * @return this builder for chaining
+         */
+        public Builder timeoutPolicy(TimeoutPolicy timeoutPolicy) {
+            this.timeoutPolicy = timeoutPolicy;
             return this;
         }
 
