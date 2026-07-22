@@ -3,6 +3,7 @@ package com.orchestrator.core.repository.support;
 import com.orchestrator.core.engine.SagaInstance;
 import com.orchestrator.core.engine.SagaSnapshot;
 import com.orchestrator.core.event.SagaDomainEvent;
+import com.orchestrator.core.projection.SagaInstanceView;
 import com.orchestrator.core.projection.SagaInstanceViewStore;
 import com.orchestrator.core.projection.SagaProjector;
 import com.orchestrator.core.repository.EventMetadata;

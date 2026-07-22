@@ -11,6 +11,10 @@ java {
     }
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
 repositories {
     mavenCentral()
 }
@@ -18,6 +22,7 @@ repositories {
 dependencies {
     implementation(project(":saga-orchestrator-core"))
     implementation(project(":saga-orchestrator-messaging"))
+    implementation("com.google.protobuf:protobuf-java:3.25.3")
 
     // Actual PostgreSQL JDBC driver - needed at RUNTIME to connect, not to
     // compile against this module's use of the java.sql/javax.sql interfaces

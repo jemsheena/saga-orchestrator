@@ -7,6 +7,7 @@ import com.orchestrator.core.event.SagaCompleted;
 import com.orchestrator.core.event.SagaDomainEvent;
 import com.orchestrator.core.event.SagaFailed;
 import com.orchestrator.core.event.SagaStarted;
+import com.orchestrator.core.event.SagaTimedOut;
 import com.orchestrator.core.event.StepCompleted;
 import com.orchestrator.core.event.StepFailed;
 
@@ -15,7 +16,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * A hand-written, dependency-free JSON serializer for exactly the 7
+ * A hand-written, dependency-free JSON serializer for exactly the 8
  * {@link SagaDomainEvent} types.
  *
  * <p><b>Why this exists instead of using Jackson:</b> this implementation
@@ -69,6 +70,9 @@ public final class HandWrittenJsonEventSerializer implements SagaEventSerializer
             case SagaFailed e -> {
                 // no additional fields
             }
+            case SagaTimedOut e -> {
+                // no additional fields
+            }
         }
         return w.build();
     }
@@ -101,6 +105,7 @@ public final class HandWrittenJsonEventSerializer implements SagaEventSerializer
             case "CompensationStepCompleted" -> new CompensationStepCompleted(sagaId,
                     fields.get("stepName"), Integer.parseInt(fields.get("compensationCursor")), occurredAt);
             case "SagaFailed" -> new SagaFailed(sagaId, occurredAt);
+            case "SagaTimedOut" -> new SagaTimedOut(sagaId, occurredAt);
             default -> throw new IllegalArgumentException(
                     "Unknown event type '" + eventType + "' encountered during deserialization — "
                             + "this indicates either data corruption or a new event type that was added to "

@@ -14,6 +14,8 @@ import com.orchestrator.postgres.serialization.HandWrittenJsonEventSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -90,6 +92,11 @@ class PostgresSagaInstanceRepositoryIntegrationTest extends AbstractPostgresInte
             @Override
             public Optional<SagaInstanceView> findById(UUID sagaId) {
                 return Optional.empty();
+            }
+
+            @Override
+            public List<SagaInstanceView> findExpiredNonTerminal(int limit, Instant deadlineNow) {
+                return List.of();
             }
         };
         DefaultSagaInstanceRepository brokenRepo = new DefaultSagaInstanceRepository(
