@@ -61,7 +61,7 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
         repository = new DefaultSagaInstanceRepository(
                 eventStore, snapshotStore, viewStore, new SagaProjector(), transactionRunner, 20, 1);
 
-        scheduler = new SagaTimeoutScheduler(repository, registry, outboxStore, 100);
+        scheduler = new SagaTimeoutScheduler(repository, registry, outboxStore, 100, Clock.systemUTC());
     }
 
     @Test
@@ -211,7 +211,7 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
             throw new RuntimeException(e);
         }
 
-        SagaTimeoutScheduler smallBatchScheduler = new SagaTimeoutScheduler(repository, registry, outboxStore, 2);
+        SagaTimeoutScheduler smallBatchScheduler = new SagaTimeoutScheduler(repository, registry, outboxStore, 2, Clock.systemUTC());
 
         // Process with batchSize=2 - should process 2 in first call
         int processed1 = smallBatchScheduler.processBatch();
