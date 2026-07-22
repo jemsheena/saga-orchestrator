@@ -30,7 +30,6 @@ Every decision below is documented with the alternative that was considered and 
 
 **Designed, not yet built** (see [Roadmap](#roadmap)):
 - Kafka-based command/reply messaging between the orchestrator and independent participant services
-- Outbox/Inbox patterns for exactly-once-effect delivery over an at-least-once transport
 - REST API, timeout handling, and distributed tracing across service boundaries
 
 ## Architecture Overview
@@ -154,6 +153,49 @@ repository.save(midFlight, EventMetadata.newCorrelation());
 
 Every one of these calls appends immutable events, keeps `saga_instance_view` transactionally in sync, and enforces optimistic concurrency automatically — none of that is visible at this call site, which is the point.
 
+## Inbox / Exactly-once Processing
+
+The inbox layer in this repository is implemented in `saga-orchestrator-messaging`.
+It is designed to make Kafka's inherently at-least-once delivery behave like exactly-once
+from the application's perspective.
+
+- `InboxStore` is the durable deduplication and processing-state store.
+- `InboxProcessor` wraps a business handler with an atomic inbox lifecycle:
+  1. record message as received,
+  2. execute the handler inside a transaction,
+  3. mark the message processed or failed.
+- `InboxKafkaConsumer` wires Kafka delivery into `InboxProcessor` and commits offsets
+  only after the processor completes successfully.
+- Duplicate deliveries are detected by `InboxStore.recordIfNew(...)`.
+  The first successful delivery is processed; later duplicates are skipped.
+- Postgres implementation uses `INSERT ... ON CONFLICT DO NOTHING` for safe,
+  concurrent deduplication during consumer rebalance and redelivery.
+
+### Example inbox wiring
+
+```java
+InboxStore inboxStore = new PostgresInboxStore(dataSource);
+TransactionRunner transactionRunner = new PostgresMessagingTransactionRunner(dataSource);
+
+InboxMessageHandler<byte[]> businessHandler = (payload, headers) -> {
+    // decode the reply payload, update saga state, and persist any outgoing effects
+};
+
+try (InboxKafkaConsumer consumer = new InboxKafkaConsumer(
+        bootstrapServers,
+        "payment-reply-group",
+        List.of("payment.replies.v1"),
+        inboxStore,
+        "payment-reply-consumer",
+        bytes -> UUID.nameUUIDFromBytes(bytes),
+        businessHandler,
+        transactionRunner,
+        new SimpleMeterRegistry())) {
+    consumer.start();
+    // keep the JVM alive while consuming
+}
+```
+
 ## Current Implementation Status
 
 | Component | Status |
@@ -164,7 +206,7 @@ Every one of these calls appends immutable events, keeps `saga_instance_view` tr
 | CQRS read model + synchronous projection | ✅ Implemented, integration tested |
 | Snapshotting | ✅ Implemented, unit + integration tested |
 | REST API | ❌ Not implemented |
-| Kafka messaging / Outbox / Inbox | ✅ Implemented for payment participant command/reply flow using the existing abstractions |
+| Kafka messaging / Outbox / Inbox | ✅ Implemented for messaging abstractions and end-to-end reply ingestion |
 | Participant services (payment, inventory, shipping) | ⚠️ Payment participant implemented; inventory/shipping remain planned |
 | Distributed tracing | ❌ Not implemented |
 

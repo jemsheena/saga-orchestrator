@@ -9,5 +9,12 @@ import com.orchestrator.messaging.MessageHeaders;
  */
 public interface InboxMessageHandler<T> {
 
+    /**
+     * Processes a single inbound message.
+     *
+     * @throws Exception if processing failed; the calling inbox processor will
+     *                   mark the message failed and prevent offset commit until
+     *                   the batch is retried or handled by the transport layer.
+     */
     void handle(T payload, MessageHeaders headers) throws Exception;
 }

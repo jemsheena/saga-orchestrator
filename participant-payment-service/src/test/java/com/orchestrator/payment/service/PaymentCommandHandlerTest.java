@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,8 +29,35 @@ class PaymentCommandHandlerTest {
         RecordingOutboxStore outboxStore = new RecordingOutboxStore();
         InboxStore inboxStore = new InboxStore() {
             @Override
-            public boolean recordIfNew(UUID messageId) {
+            public boolean recordIfNew(UUID messageId, String consumer, String topic, String partitionKey) {
                 return true;
+            }
+
+            @Override
+            public boolean exists(UUID messageId, String consumer) {
+                return false;
+            }
+
+            @Override
+            public void save(com.orchestrator.messaging.inbox.InboxRecord record) {
+            }
+
+            @Override
+            public void markProcessed(UUID messageId, String consumer) {
+            }
+
+            @Override
+            public void markFailed(UUID messageId, String consumer) {
+            }
+
+            @Override
+            public Optional<com.orchestrator.messaging.inbox.InboxRecord> find(UUID messageId, String consumer) {
+                return Optional.empty();
+            }
+
+            @Override
+            public int cleanup(java.time.Instant olderThan, int limit) {
+                return 0;
             }
         };
         PaymentCommandHandler handler = new PaymentCommandHandler(repo, inboxStore, outboxStore);
@@ -92,8 +120,35 @@ class PaymentCommandHandlerTest {
         }
 
         @Override
-        public boolean recordIfNew(UUID messageId) {
+        public boolean recordIfNew(UUID messageId, String consumer, String topic, String partitionKey) {
             return result;
+        }
+
+        @Override
+        public boolean exists(UUID messageId, String consumer) {
+            return false;
+        }
+
+        @Override
+        public void save(com.orchestrator.messaging.inbox.InboxRecord record) {
+        }
+
+        @Override
+        public void markProcessed(UUID messageId, String consumer) {
+        }
+
+        @Override
+        public void markFailed(UUID messageId, String consumer) {
+        }
+
+        @Override
+        public Optional<com.orchestrator.messaging.inbox.InboxRecord> find(UUID messageId, String consumer) {
+            return Optional.empty();
+        }
+
+        @Override
+        public int cleanup(java.time.Instant olderThan, int limit) {
+            return 0;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.orchestrator.messaging.inbox;
 
+import com.orchestrator.messaging.MessageHandler;
 import com.orchestrator.messaging.MessageHeaders;
 import com.orchestrator.messaging.transaction.TransactionRunner;
 import io.micrometer.core.instrument.Counter;
@@ -14,7 +15,7 @@ import java.util.function.Function;
  * Orchestrates duplicate detection, business handling, and inbox state updates
  * for exactly-once processing from the application's point of view.
  */
-public final class InboxProcessor implements InboxMessageHandler<byte[]> {
+public final class InboxProcessor implements MessageHandler {
 
     private static final String DEFAULT_TOPIC = "";
     private static final String DEFAULT_PARTITION_KEY = "";
@@ -56,19 +57,11 @@ public final class InboxProcessor implements InboxMessageHandler<byte[]> {
         receivedCounter.increment();
 
         transactionRunner.runInTransaction(() -> {
-            if (inboxStore.exists(messageId, consumer)) {
+            boolean firstSeen = inboxStore.recordIfNew(messageId, consumer, DEFAULT_TOPIC, DEFAULT_PARTITION_KEY);
+            if (!firstSeen) {
                 duplicateCounter.increment();
                 return;
             }
-
-            inboxStore.save(new InboxRecord(
-                    messageId,
-                    consumer,
-                    DEFAULT_TOPIC,
-                    DEFAULT_PARTITION_KEY,
-                    Instant.now(),
-                    null,
-                    InboxStatus.RECEIVED));
 
             try {
                 handler.handle(payload, headers);

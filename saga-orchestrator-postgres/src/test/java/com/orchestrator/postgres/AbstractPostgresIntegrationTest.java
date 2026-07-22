@@ -44,6 +44,7 @@ abstract class AbstractPostgresIntegrationTest {
             runScript(connection, "/db/migration/V3__outbox_inbox.sql");
             runScript(connection, "/db/migration/V4__timeout_fields.sql");
             runScript(connection, "/db/migration/V5__outbox_retry_columns.sql");
+            runScript(connection, "/db/migration/V6__inbox_constraints.sql");
         }
     }
 

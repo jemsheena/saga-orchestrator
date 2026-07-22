@@ -58,6 +58,11 @@ class SagaOrchestratorTest {
             public boolean recordIfNew(UUID messageId) {
                 return true;
             }
+
+            @Override
+            public int cleanup(java.time.Instant olderThan, int limit) {
+                return 0;
+            }
         };
         SagaOrchestrator orchestrator = new SagaOrchestrator(repository, registry, inboxStore, outboxStore);
 
@@ -104,6 +109,11 @@ class SagaOrchestratorTest {
             @Override
             public boolean recordIfNew(UUID messageId) {
                 return true;
+            }
+
+            @Override
+            public int cleanup(java.time.Instant olderThan, int limit) {
+                return 0;
             }
         };
         SagaOrchestrator orchestrator = new SagaOrchestrator(repository, registry, inboxStore, outboxStore);

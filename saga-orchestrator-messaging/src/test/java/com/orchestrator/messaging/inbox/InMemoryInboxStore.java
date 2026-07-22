@@ -1,59 +1,83 @@
 package com.orchestrator.messaging.inbox;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * In-memory {@link InboxStore} upholding the same atomicity contract as
- * {@code PostgresInboxStore} — {@link #recordIfNew} is synchronized so
- * "check and record" is genuinely one indivisible operation, mirroring what
- * Postgres's {@code INSERT ... ON CONFLICT DO NOTHING} + update-count check
- * achieves via the database's own primary-key uniqueness. Test-only.
+ * {@code PostgresInboxStore}. Test-only.
  */
 public final class InMemoryInboxStore implements InboxStore {
 
-    private final Set<UUID> seen = new HashSet<>();
+    private final Map<String, InboxRecord> records = new HashMap<>();
 
     @Override
     public synchronized boolean recordIfNew(UUID messageId) {
-        return seen.add(messageId);
+        return recordIfNew(messageId, "default", "", "");
     }
 
     @Override
     public synchronized boolean recordIfNew(UUID messageId, String consumer, String topic, String partitionKey) {
-        return seen.add(messageId);
+        String key = compositeKey(messageId, consumer);
+        if (records.containsKey(key)) {
+            return false;
+        }
+        records.put(key, new InboxRecord(messageId, consumer, topic, partitionKey,
+                Instant.now(), null, InboxStatus.RECEIVED));
+        return true;
     }
 
     @Override
     public synchronized boolean exists(UUID messageId, String consumer) {
-        return seen.contains(messageId);
+        return records.containsKey(compositeKey(messageId, consumer));
     }
 
     @Override
     public synchronized void save(InboxRecord record) {
-        seen.add(record.messageId());
+        records.putIfAbsent(compositeKey(record.messageId(), record.consumer()), record);
     }
 
     @Override
     public synchronized void markProcessed(UUID messageId, String consumer) {
-        // no-op for in-memory test store
+        String key = compositeKey(messageId, consumer);
+        InboxRecord record = records.get(key);
+        if (record != null) {
+            records.put(key, new InboxRecord(record.messageId(), record.consumer(), record.topic(), record.partitionKey(),
+                    record.receivedAt(), Instant.now(), InboxStatus.PROCESSED));
+        }
     }
 
     @Override
     public synchronized void markFailed(UUID messageId, String consumer) {
-        // no-op for in-memory test store
+        String key = compositeKey(messageId, consumer);
+        InboxRecord record = records.get(key);
+        if (record != null) {
+            records.put(key, new InboxRecord(record.messageId(), record.consumer(), record.topic(), record.partitionKey(),
+                    record.receivedAt(), null, InboxStatus.FAILED));
+        }
     }
 
     @Override
-    public synchronized java.util.Optional<InboxRecord> find(UUID messageId, String consumer) {
-        return seen.contains(messageId)
-                ? java.util.Optional.of(new InboxRecord(messageId, consumer, "", "", java.time.Instant.now(), java.time.Instant.now(), InboxStatus.PROCESSED))
-                : java.util.Optional.empty();
+    public synchronized Optional<InboxRecord> find(UUID messageId, String consumer) {
+        return Optional.ofNullable(records.get(compositeKey(messageId, consumer)));
     }
 
     @Override
-    public synchronized int cleanup(java.time.Instant olderThan, int limit) {
-        return 0;
+    public synchronized int cleanup(Instant olderThan, int limit) {
+        return records.values().stream()
+                .filter(record -> record.status() == InboxStatus.PROCESSED && record.processedAt() != null
+                        && record.processedAt().isBefore(olderThan))
+                .limit(limit)
+                .map(record -> compositeKey(record.messageId(), record.consumer()))
+                .map(records::remove)
+                .map(removed -> 1)
+                .reduce(0, Integer::sum);
+    }
+
+    private static String compositeKey(UUID messageId, String consumer) {
+        return messageId + "@" + consumer;
     }
 }
