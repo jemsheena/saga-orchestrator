@@ -2,6 +2,7 @@ package com.orchestrator.messaging.outbox;
 
 import com.orchestrator.messaging.MessageHeaders;
 import com.orchestrator.messaging.MessagePublisher;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import java.util.Objects;
 import java.util.concurrent.Executors;
@@ -27,19 +28,29 @@ public final class OutboxPublisher {
     private final OutboxStore outboxStore;
     private final MessagePublisher messagePublisher;
     private final int batchSize;
+    private final OutboxPublisherMetrics metrics;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "outbox-publisher");
         t.setDaemon(true);
         return t;
     });
 
-    public OutboxPublisher(OutboxStore outboxStore, MessagePublisher messagePublisher, int batchSize) {
+    public OutboxPublisher(OutboxStore outboxStore,
+                           MessagePublisher messagePublisher,
+                           int batchSize,
+                           OutboxPublisherMetrics metrics) {
         this.outboxStore = Objects.requireNonNull(outboxStore, "outboxStore must not be null");
         this.messagePublisher = Objects.requireNonNull(messagePublisher, "messagePublisher must not be null");
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
         if (batchSize < 1) {
             throw new IllegalArgumentException("batchSize must be >= 1");
         }
         this.batchSize = batchSize;
+    }
+
+    public OutboxPublisher(OutboxStore outboxStore, MessagePublisher messagePublisher, int batchSize) {
+        this(outboxStore, messagePublisher, batchSize,
+                new OutboxPublisherMetrics(new SimpleMeterRegistry()));
     }
 
     /**
@@ -50,12 +61,19 @@ public final class OutboxPublisher {
      * @return the number of records successfully dispatched
      */
     public int pollOnce() {
-        return outboxStore.claimAndDispatch(batchSize, record ->
+        return outboxStore.claimAndDispatch(batchSize, record -> {
+            try {
                 messagePublisher.publish(
                         record.topic(),
                         record.messageKey(),
                         record.payload(),
-                        new MessageHeaders(record.correlationId(), record.causationId())));
+                        new MessageHeaders(record.correlationId(), record.causationId()));
+                metrics.incrementPublished();
+            } catch (RuntimeException e) {
+                metrics.incrementPublishFailed();
+                throw e;
+            }
+        });
     }
 
     /** Begins polling every {@code intervalMillis}. Returns immediately. */

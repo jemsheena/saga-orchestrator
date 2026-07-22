@@ -20,6 +20,7 @@ dependencies {
     // Pure generated-message dependency - protoc-generated Java classes need
     // this runtime regardless of what messaging technology carries the bytes.
     implementation("com.google.protobuf:protobuf-java:3.25.3")
+    implementation("io.micrometer:micrometer-core:1.12.0")
 
     // Kafka producer/consumer client. Used only by the com.orchestrator.messaging.kafka
     // package - the rest of this module (MessagePublisher/MessageHandler interfaces,

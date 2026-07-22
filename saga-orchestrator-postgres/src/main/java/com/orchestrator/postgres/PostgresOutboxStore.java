@@ -3,6 +3,8 @@ package com.orchestrator.postgres;
 import com.orchestrator.messaging.outbox.OutboxDispatcher;
 import com.orchestrator.messaging.outbox.OutboxRecord;
 import com.orchestrator.messaging.outbox.OutboxStore;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -45,17 +47,23 @@ public final class PostgresOutboxStore implements OutboxStore {
 
     private final DataSource dataSource;
     private final int maxRetryCount;
+    private final OutboxDispatchMetrics metrics;
 
     public PostgresOutboxStore(DataSource dataSource) {
-        this(dataSource, DEFAULT_MAX_RETRY_COUNT);
+        this(dataSource, DEFAULT_MAX_RETRY_COUNT, new OutboxDispatchMetrics(new SimpleMeterRegistry()));
     }
 
     public PostgresOutboxStore(DataSource dataSource, int maxRetryCount) {
+        this(dataSource, maxRetryCount, new OutboxDispatchMetrics(new SimpleMeterRegistry()));
+    }
+
+    public PostgresOutboxStore(DataSource dataSource, int maxRetryCount, OutboxDispatchMetrics metrics) {
         this.dataSource = Objects.requireNonNull(dataSource, "dataSource must not be null");
         if (maxRetryCount < 1) {
             throw new IllegalArgumentException("maxRetryCount must be >= 1");
         }
         this.maxRetryCount = maxRetryCount;
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
     }
 
     @Override
@@ -125,10 +133,16 @@ public final class PostgresOutboxStore implements OutboxStore {
                         }
                         dispatchedCount++;
                     } catch (Exception dispatchFailure) {
+                        int currentRetryCount = getCurrentRetryCount(connection, record.outboxId());
+                        boolean willDeadLetter = currentRetryCount + 1 >= maxRetryCount;
                         try (PreparedStatement retryStmt = connection.prepareStatement(incrementRetryCountSql)) {
                             retryStmt.setInt(1, maxRetryCount);
                             retryStmt.setObject(2, record.outboxId());
                             retryStmt.executeUpdate();
+                        }
+                        metrics.incrementRetry();
+                        if (willDeadLetter) {
+                            metrics.incrementDeadLetter();
                         }
                         System.err.println("[WARN] Failed to dispatch outbox record "
                                 + record.outboxId() + ", will retry next poll: " + dispatchFailure);
@@ -166,5 +180,18 @@ public final class PostgresOutboxStore implements OutboxStore {
             }
         }
         return claimed;
+    }
+
+    private int getCurrentRetryCount(Connection connection, UUID outboxId) throws SQLException {
+        String sql = "SELECT retry_count FROM outbox WHERE outbox_id = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setObject(1, outboxId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+                throw new SQLException("Outbox record not found for retry count: " + outboxId);
+            }
+        }
     }
 }
