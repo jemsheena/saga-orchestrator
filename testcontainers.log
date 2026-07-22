@@ -1,0 +1,460 @@
+Initialized native services in: C:\Users\USER\.gradle\native
+Initialized jansi services in: C:\Users\USER\.gradle\native
+Received JVM installation metadata from 'C:\Program Files\Java\jdk-17': {JAVA_HOME=C:\Program Files\Java\jdk-17, JAVA_VERSION=17.0.14, JAVA_VENDOR=Oracle Corporation, RUNTIME_NAME=Java(TM) SE Runtime Environment, RUNTIME_VERSION=17.0.14+8-LTS-191, VM_NAME=Java HotSpot(TM) 64-Bit Server VM, VM_VERSION=17.0.14+8-LTS-191, VM_VENDOR=Oracle Corporation, OS_ARCH=amd64}
+The client will now receive all logging from the daemon (pid: 13544). The daemon log file: C:\Users\USER\.gradle\daemon\8.10\daemon-13544.out.log
+Starting 21st build in daemon [uptime: 49 mins 42.391 secs, performance: 100%, GC rate: 0.00/s, heap usage: 0% of 512 MiB, non-heap usage: 35% of 384 MiB]
+Using 12 worker leases.
+Now considering [C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Starting Build
+Settings evaluated using settings file 'C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\settings.gradle.kts'.
+Projects loaded. Root project using build file 'C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\build.gradle'.
+Included projects: [root project 'saga-orchestrator', project ':participant-payment-service', project ':saga-orchestrator-core', project ':saga-orchestrator-messaging', project ':saga-orchestrator-postgres']
+
+> Configure project :
+Evaluating root project 'saga-orchestrator' using build file 'C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\build.gradle'.
+
+> Configure project :participant-payment-service
+Evaluating project ':participant-payment-service' using build file 'C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\participant-payment-service\build.gradle.kts'.
+
+> Configure project :saga-orchestrator-core
+Evaluating project ':saga-orchestrator-core' using build file 'C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\saga-orchestrator-core\build.gradle.kts'.
+
+> Configure project :saga-orchestrator-messaging
+Evaluating project ':saga-orchestrator-messaging' using build file 'C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\saga-orchestrator-messaging\build.gradle.kts'.
+Transforming protobuf-gradle-plugin-0.9.4.jar (com.google.protobuf:protobuf-gradle-plugin:0.9.4) with InstrumentationAnalysisTransform
+Transforming osdetector-gradle-plugin-1.7.3.jar (com.google.gradle:osdetector-gradle-plugin:1.7.3) with InstrumentationAnalysisTransform
+Transforming os-maven-plugin-1.7.1.jar (kr.motd.maven:os-maven-plugin:1.7.1) with InstrumentationAnalysisTransform
+Transforming jsr305-3.0.2.jar (com.google.code.findbugs:jsr305:3.0.2) with InstrumentationAnalysisTransform
+Transforming protobuf-gradle-plugin-0.9.4.jar (com.google.protobuf:protobuf-gradle-plugin:0.9.4) with InstrumentationAnalysisTransform
+Transforming protobuf-gradle-plugin-0.9.4.jar (com.google.protobuf:protobuf-gradle-plugin:0.9.4) with MergeInstrumentationAnalysisTransform
+Transforming osdetector-gradle-plugin-1.7.3.jar (com.google.gradle:osdetector-gradle-plugin:1.7.3) with InstrumentationAnalysisTransform
+Transforming osdetector-gradle-plugin-1.7.3.jar (com.google.gradle:osdetector-gradle-plugin:1.7.3) with MergeInstrumentationAnalysisTransform
+Transforming os-maven-plugin-1.7.1.jar (kr.motd.maven:os-maven-plugin:1.7.1) with InstrumentationAnalysisTransform
+Transforming protobuf-gradle-plugin-0.9.4.jar (com.google.protobuf:protobuf-gradle-plugin:0.9.4) with ExternalDependencyInstrumentingArtifactTransform
+Transforming os-maven-plugin-1.7.1.jar (kr.motd.maven:os-maven-plugin:1.7.1) with MergeInstrumentationAnalysisTransform
+Transforming jsr305-3.0.2.jar (com.google.code.findbugs:jsr305:3.0.2) with InstrumentationAnalysisTransform
+Transforming jsr305-3.0.2.jar (com.google.code.findbugs:jsr305:3.0.2) with MergeInstrumentationAnalysisTransform
+Transforming osdetector-gradle-plugin-1.7.3.jar (com.google.gradle:osdetector-gradle-plugin:1.7.3) with ExternalDependencyInstrumentingArtifactTransform
+Transforming os-maven-plugin-1.7.1.jar (kr.motd.maven:os-maven-plugin:1.7.1) with ExternalDependencyInstrumentingArtifactTransform
+Transforming jsr305-3.0.2.jar (com.google.code.findbugs:jsr305:3.0.2) with ExternalDependencyInstrumentingArtifactTransform
+------------------------------------------------------------------------
+Detecting the operating system and CPU architecture
+------------------------------------------------------------------------
+os.detected.name=windows
+os.detected.arch=x86_64
+os.detected.bitness=64
+os.detected.version=10.0
+os.detected.version.major=10
+os.detected.version.minor=0
+os.detected.classifier=windows-x86_64
+
+> Configure project :saga-orchestrator-postgres
+Evaluating project ':saga-orchestrator-postgres' using build file 'C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\saga-orchestrator-postgres\build.gradle.kts'.
+All projects evaluated.
+Task path ':saga-orchestrator-postgres:test' matched project ':saga-orchestrator-postgres'
+Task name matched 'test'
+Selected primary task 'test' from project :saga-orchestrator-postgres
+Tasks to be executed: [task ':saga-orchestrator-messaging:extractIncludeProto', task ':saga-orchestrator-messaging:extractProto', task ':saga-orchestrator-messaging:generateProto', task ':saga-orchestrator-messaging:compileJava', task ':saga-orchestrator-messaging:processResources', task ':saga-orchestrator-messaging:classes', task ':saga-orchestrator-messaging:jar', task ':saga-orchestrator-core:compileJava', task ':saga-orchestrator-core:processResources', task ':saga-orchestrator-core:classes', task ':saga-orchestrator-core:jar', task ':saga-orchestrator-postgres:compileJava', task ':saga-orchestrator-postgres:processResources', task ':saga-orchestrator-postgres:classes', task ':saga-orchestrator-postgres:compileTestJava', task ':saga-orchestrator-postgres:processTestResources', task ':saga-orchestrator-postgres:testClasses', task ':saga-orchestrator-postgres:test']
+Tasks that were excluded: []
+Resolve mutations for :saga-orchestrator-messaging:extractIncludeProto (Thread[Execution worker,5,main]) started.
+:saga-orchestrator-messaging:extractIncludeProto (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-messaging:extractIncludeProto UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-messaging:extractIncludeProto' because:
+  Build cache is disabled
+  Caching has not been enabled for the task
+Skipping task ':saga-orchestrator-messaging:extractIncludeProto' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-messaging:extractProto (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-messaging:extractProto (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-messaging:extractProto UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-messaging:extractProto' because:
+  Build cache is disabled
+  Caching has not been enabled for the task
+Skipping task ':saga-orchestrator-messaging:extractProto' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-messaging:generateProto (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-messaging:generateProto (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-messaging:generateProto UP-TO-DATE
+Custom actions are attached to task ':saga-orchestrator-messaging:generateProto'.
+Caching disabled for task ':saga-orchestrator-messaging:generateProto' because:
+  Build cache is disabled
+Skipping task ':saga-orchestrator-messaging:generateProto' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-messaging:compileJava (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-messaging:compileJava (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-messaging:compileJava UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-messaging:compileJava' because:
+  Build cache is disabled
+Skipping task ':saga-orchestrator-messaging:compileJava' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-messaging:processResources (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-messaging:processResources (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-messaging:processResources UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-messaging:processResources' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':saga-orchestrator-messaging:processResources' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-messaging:classes (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-messaging:classes (Thread[Execution worker Thread 6,5,main]) started.
+
+> Task :saga-orchestrator-messaging:classes UP-TO-DATE
+Skipping task ':saga-orchestrator-messaging:classes' as it has no actions.
+Resolve mutations for :saga-orchestrator-messaging:jar (Thread[Execution worker Thread 6,5,main]) started.
+:saga-orchestrator-messaging:jar (Thread[Execution worker Thread 6,5,main]) started.
+
+> Task :saga-orchestrator-messaging:jar UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-messaging:jar' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':saga-orchestrator-messaging:jar' as it is up-to-date.
+work action resolve saga-orchestrator-messaging-0.1.0-M3.jar (project :saga-orchestrator-messaging) (Thread[Execution worker Thread 6,5,main]) started.
+Resolve mutations for :saga-orchestrator-core:compileJava (Thread[Execution worker Thread 6,5,main]) started.
+:saga-orchestrator-core:compileJava (Thread[Execution worker Thread 6,5,main]) started.
+
+> Task :saga-orchestrator-core:compileJava UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-core:compileJava' because:
+  Build cache is disabled
+Skipping task ':saga-orchestrator-core:compileJava' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-core:processResources (Thread[Execution worker Thread 6,5,main]) started.
+:saga-orchestrator-core:processResources (Thread[Execution worker Thread 6,5,main]) started.
+
+> Task :saga-orchestrator-core:processResources NO-SOURCE
+Skipping task ':saga-orchestrator-core:processResources' as it has no source files and no previous output files.
+Resolve mutations for :saga-orchestrator-core:classes (Thread[Execution worker Thread 6,5,main]) started.
+:saga-orchestrator-core:classes (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-core:classes UP-TO-DATE
+Skipping task ':saga-orchestrator-core:classes' as it has no actions.
+Resolve mutations for :saga-orchestrator-core:jar (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-core:jar (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-core:jar UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-core:jar' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':saga-orchestrator-core:jar' as it is up-to-date.
+work action resolve saga-orchestrator-core-0.1.0-M1.jar (project :saga-orchestrator-core) (Thread[Execution worker Thread 10,5,main]) started.
+Resolve mutations for :saga-orchestrator-postgres:compileJava (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-postgres:compileJava (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-postgres:compileJava UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-postgres:compileJava' because:
+  Build cache is disabled
+Skipping task ':saga-orchestrator-postgres:compileJava' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-postgres:processResources (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-postgres:processResources (Thread[Execution worker Thread 10,5,main]) started.
+
+> Task :saga-orchestrator-postgres:processResources UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-postgres:processResources' because:
+  Build cache is disabled
+  Not worth caching
+Skipping task ':saga-orchestrator-postgres:processResources' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-postgres:classes (Thread[Execution worker Thread 10,5,main]) started.
+:saga-orchestrator-postgres:classes (Thread[Execution worker Thread 9,5,main]) started.
+
+> Task :saga-orchestrator-postgres:classes UP-TO-DATE
+Skipping task ':saga-orchestrator-postgres:classes' as it has no actions.
+Resolve mutations for :saga-orchestrator-postgres:compileTestJava (Thread[Execution worker Thread 3,5,main]) started.
+:saga-orchestrator-postgres:compileTestJava (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :saga-orchestrator-postgres:compileTestJava UP-TO-DATE
+Caching disabled for task ':saga-orchestrator-postgres:compileTestJava' because:
+  Build cache is disabled
+Skipping task ':saga-orchestrator-postgres:compileTestJava' as it is up-to-date.
+Resolve mutations for :saga-orchestrator-postgres:processTestResources (Thread[Execution worker Thread 3,5,main]) started.
+:saga-orchestrator-postgres:processTestResources (Thread[Execution worker Thread 3,5,main]) started.
+
+> Task :saga-orchestrator-postgres:processTestResources NO-SOURCE
+Skipping task ':saga-orchestrator-postgres:processTestResources' as it has no source files and no previous output files.
+Resolve mutations for :saga-orchestrator-postgres:testClasses (Thread[Execution worker Thread 3,5,main]) started.
+:saga-orchestrator-postgres:testClasses (Thread[Execution worker,5,main]) started.
+
+> Task :saga-orchestrator-postgres:testClasses UP-TO-DATE
+Skipping task ':saga-orchestrator-postgres:testClasses' as it has no actions.
+Resolve mutations for :saga-orchestrator-postgres:test (Thread[Execution worker,5,main]) started.
+:saga-orchestrator-postgres:test (Thread[Execution worker,5,main]) started.
+Gradle Test Executor 31 started executing tests.
+Gradle Test Executor 31 finished executing tests.
+
+> Task :saga-orchestrator-postgres:test
+Caching disabled for task ':saga-orchestrator-postgres:test' because:
+  Build cache is disabled
+Task ':saga-orchestrator-postgres:test' is not up-to-date because:
+  Task has failed previously.
+Starting process 'Gradle Test Executor 31'. Working directory: C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\saga-orchestrator-postgres Command: C:\Program Files\Java\jdk-21.0.12\bin\java.exe -Dorg.gradle.internal.worker.tmpdir=C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\saga-orchestrator-postgres\build\tmp\test\work @C:\Users\USER\.gradle\.tmp\gradle-worker-classpath1540523523389624749txt -Xmx512m -Dfile.encoding=windows-1252 -Duser.country=IN -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 31'
+Successfully started process 'Gradle Test Executor 31'
+
+PostgresInboxStoreIntegrationTest STANDARD_ERROR
+    SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+    SLF4J: Defaulting to no-operation (NOP) logger implementation
+    SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+
+PostgresInboxStoreIntegrationTest > initializationError FAILED
+    java.lang.IllegalStateException: Could not find a valid Docker environment. Please see logs and check configuration
+        at org.testcontainers.dockerclient.DockerClientProviderStrategy.lambda$getFirstValidStrategy$7(DockerClientProviderStrategy.java:277)
+        at java.base/java.util.Optional.orElseThrow(Optional.java:403)
+        at org.testcontainers.dockerclient.DockerClientProviderStrategy.getFirstValidStrategy(DockerClientProviderStrategy.java:268)
+        at org.testcontainers.DockerClientFactory.getOrInitializeStrategy(DockerClientFactory.java:152)
+        at org.testcontainers.DockerClientFactory.client(DockerClientFactory.java:194)
+        at org.testcontainers.DockerClientFactory$1.getDockerClient(DockerClientFactory.java:106)
+        at com.github.dockerjava.api.DockerClientDelegate.authConfig(DockerClientDelegate.java:109)
+        at org.testcontainers.containers.GenericContainer.start(GenericContainer.java:329)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:276)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:263)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:83)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:57)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+PostgresOutboxStoreIntegrationTest > initializationError FAILED
+    java.lang.IllegalStateException: Previous attempts to find a Docker environment failed. Will not retry. Please see logs and check configuration
+        at org.testcontainers.dockerclient.DockerClientProviderStrategy.getFirstValidStrategy(DockerClientProviderStrategy.java:232)
+        at org.testcontainers.DockerClientFactory.getOrInitializeStrategy(DockerClientFactory.java:152)
+        at org.testcontainers.DockerClientFactory.client(DockerClientFactory.java:194)
+        at org.testcontainers.DockerClientFactory$1.getDockerClient(DockerClientFactory.java:106)
+        at com.github.dockerjava.api.DockerClientDelegate.authConfig(DockerClientDelegate.java:109)
+        at org.testcontainers.containers.GenericContainer.start(GenericContainer.java:329)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:276)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:263)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:83)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:57)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+PostgresSagaEventStoreIntegrationTest > initializationError FAILED
+    java.lang.IllegalStateException: Previous attempts to find a Docker environment failed. Will not retry. Please see logs and check configuration
+        at org.testcontainers.dockerclient.DockerClientProviderStrategy.getFirstValidStrategy(DockerClientProviderStrategy.java:232)
+        at org.testcontainers.DockerClientFactory.getOrInitializeStrategy(DockerClientFactory.java:152)
+        at org.testcontainers.DockerClientFactory.client(DockerClientFactory.java:194)
+        at org.testcontainers.DockerClientFactory$1.getDockerClient(DockerClientFactory.java:106)
+        at com.github.dockerjava.api.DockerClientDelegate.authConfig(DockerClientDelegate.java:109)
+        at org.testcontainers.containers.GenericContainer.start(GenericContainer.java:329)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:276)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:263)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:83)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:57)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+PostgresSagaInstanceRepositoryIntegrationTest > initializationError FAILED
+    java.lang.IllegalStateException: Previous attempts to find a Docker environment failed. Will not retry. Please see logs and check configuration
+        at org.testcontainers.dockerclient.DockerClientProviderStrategy.getFirstValidStrategy(DockerClientProviderStrategy.java:232)
+        at org.testcontainers.DockerClientFactory.getOrInitializeStrategy(DockerClientFactory.java:152)
+        at org.testcontainers.DockerClientFactory.client(DockerClientFactory.java:194)
+        at org.testcontainers.DockerClientFactory$1.getDockerClient(DockerClientFactory.java:106)
+        at com.github.dockerjava.api.DockerClientDelegate.authConfig(DockerClientDelegate.java:109)
+        at org.testcontainers.containers.GenericContainer.start(GenericContainer.java:329)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:276)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:263)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:83)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:57)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+SagaTimeoutSchedulerIntegrationTest > initializationError FAILED
+    java.lang.IllegalStateException: Previous attempts to find a Docker environment failed. Will not retry. Please see logs and check configuration
+        at org.testcontainers.dockerclient.DockerClientProviderStrategy.getFirstValidStrategy(DockerClientProviderStrategy.java:232)
+        at org.testcontainers.DockerClientFactory.getOrInitializeStrategy(DockerClientFactory.java:152)
+        at org.testcontainers.DockerClientFactory.client(DockerClientFactory.java:194)
+        at org.testcontainers.DockerClientFactory$1.getDockerClient(DockerClientFactory.java:106)
+        at com.github.dockerjava.api.DockerClientDelegate.authConfig(DockerClientDelegate.java:109)
+        at org.testcontainers.containers.GenericContainer.start(GenericContainer.java:329)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.start(TestcontainersExtension.java:276)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension$StoreAdapter.access$200(TestcontainersExtension.java:263)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$null$4(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.lambda$startContainers$5(TestcontainersExtension.java:83)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.startContainers(TestcontainersExtension.java:83)
+        at org.testcontainers.junit.jupiter.TestcontainersExtension.beforeAll(TestcontainersExtension.java:57)
+        at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+17 tests completed, 5 failed
+Finished generating test XML results (0.011 secs) into: C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\saga-orchestrator-postgres\build\test-results\test
+Generating HTML test report...
+Finished generating test html results (0.023 secs) into: C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator\saga-orchestrator-postgres\build\reports\tests\test
+
+> Task :saga-orchestrator-postgres:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':saga-orchestrator-postgres:test'.
+> There were failing tests. See the report at: file:///C:/Users/USER/Downloads/saga-orchestrator/saga-orchestrator/saga-orchestrator-postgres/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+* Exception is:
+org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':saga-orchestrator-postgres:test'.
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.lambda$executeIfValid$1(ExecuteActionsTaskExecuter.java:130)
+	at org.gradle.internal.Try$Failure.ifSuccessfulOrElse(Try.java:293)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:128)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+Caused by: org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:///C:/Users/USER/Downloads/saga-orchestrator/saga-orchestrator/saga-orchestrator-postgres/build/reports/tests/test/index.html
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleTestFailures(AbstractTestTask.java:706)
+	at org.gradle.api.tasks.testing.AbstractTestTask.handleCollectedResults(AbstractTestTask.java:540)
+	at org.gradle.api.tasks.testing.AbstractTestTask.executeTests(AbstractTestTask.java:535)
+	at org.gradle.api.tasks.testing.Test.executeTests(Test.java:731)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at org.gradle.internal.reflect.JavaMethod.invoke(JavaMethod.java:125)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.doExecute(StandardTaskAction.java:58)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:51)
+	at org.gradle.api.internal.project.taskfactory.StandardTaskAction.execute(StandardTaskAction.java:29)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$3.run(TaskExecution.java:244)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:29)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$1.execute(DefaultBuildOperationRunner.java:26)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.run(DefaultBuildOperationRunner.java:47)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeAction(TaskExecution.java:229)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeActions(TaskExecution.java:212)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.executeWithPreviousOutputFiles(TaskExecution.java:195)
+	at org.gradle.api.internal.tasks.execution.TaskExecution.execute(TaskExecution.java:162)
+	at org.gradle.internal.execution.steps.ExecuteStep.executeInternal(ExecuteStep.java:105)
+	at org.gradle.internal.execution.steps.ExecuteStep.access$000(ExecuteStep.java:44)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:59)
+	at org.gradle.internal.execution.steps.ExecuteStep$1.call(ExecuteStep.java:56)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:56)
+	at org.gradle.internal.execution.steps.ExecuteStep.execute(ExecuteStep.java:44)
+	at org.gradle.internal.execution.steps.CancelExecutionStep.execute(CancelExecutionStep.java:42)
+	at org.gradle.internal.execution.steps.TimeoutStep.executeWithoutTimeout(TimeoutStep.java:75)
+	at org.gradle.internal.execution.steps.TimeoutStep.execute(TimeoutStep.java:55)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:50)
+	at org.gradle.internal.execution.steps.PreCreateOutputParentsStep.execute(PreCreateOutputParentsStep.java:28)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:67)
+	at org.gradle.internal.execution.steps.RemovePreviousOutputsStep.execute(RemovePreviousOutputsStep.java:37)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:61)
+	at org.gradle.internal.execution.steps.BroadcastChangingOutputsStep.execute(BroadcastChangingOutputsStep.java:26)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:69)
+	at org.gradle.internal.execution.steps.CaptureOutputsAfterExecutionStep.execute(CaptureOutputsAfterExecutionStep.java:46)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:40)
+	at org.gradle.internal.execution.steps.ResolveInputChangesStep.execute(ResolveInputChangesStep.java:29)
+	at org.gradle.internal.execution.steps.BuildCacheStep.executeWithoutCache(BuildCacheStep.java:189)
+	at org.gradle.internal.execution.steps.BuildCacheStep.lambda$execute$1(BuildCacheStep.java:75)
+	at org.gradle.internal.Either$Right.fold(Either.java:175)
+	at org.gradle.internal.execution.caching.CachingState.fold(CachingState.java:62)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:73)
+	at org.gradle.internal.execution.steps.BuildCacheStep.execute(BuildCacheStep.java:48)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:46)
+	at org.gradle.internal.execution.steps.StoreExecutionStateStep.execute(StoreExecutionStateStep.java:35)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.executeBecause(SkipUpToDateStep.java:75)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.lambda$execute$2(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:53)
+	at org.gradle.internal.execution.steps.SkipUpToDateStep.execute(SkipUpToDateStep.java:35)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:37)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsFinishedStep.execute(MarkSnapshottingInputsFinishedStep.java:27)
+	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:49)
+	at org.gradle.internal.execution.steps.ResolveIncrementalCachingStateStep.executeDelegate(ResolveIncrementalCachingStateStep.java:27)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:71)
+	at org.gradle.internal.execution.steps.AbstractResolveCachingStateStep.execute(AbstractResolveCachingStateStep.java:39)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:65)
+	at org.gradle.internal.execution.steps.ResolveChangesStep.execute(ResolveChangesStep.java:36)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:107)
+	at org.gradle.internal.execution.steps.ValidateStep.execute(ValidateStep.java:56)
+	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:64)
+	at org.gradle.internal.execution.steps.AbstractCaptureStateBeforeExecutionStep.execute(AbstractCaptureStateBeforeExecutionStep.java:43)
+	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.executeWithNonEmptySources(AbstractSkipEmptyWorkStep.java:125)
+	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:61)
+	at org.gradle.internal.execution.steps.AbstractSkipEmptyWorkStep.execute(AbstractSkipEmptyWorkStep.java:36)
+	at org.gradle.internal.execution.steps.legacy.MarkSnapshottingInputsStartedStep.execute(MarkSnapshottingInputsStartedStep.java:38)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:36)
+	at org.gradle.internal.execution.steps.LoadPreviousExecutionStateStep.execute(LoadPreviousExecutionStateStep.java:23)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:75)
+	at org.gradle.internal.execution.steps.HandleStaleOutputsStep.execute(HandleStaleOutputsStep.java:41)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.lambda$execute$0(AssignMutableWorkspaceStep.java:35)
+	at org.gradle.api.internal.tasks.execution.TaskExecution$4.withWorkspace(TaskExecution.java:289)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:31)
+	at org.gradle.internal.execution.steps.AssignMutableWorkspaceStep.execute(AssignMutableWorkspaceStep.java:22)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:40)
+	at org.gradle.internal.execution.steps.ChoosePipelineStep.execute(ChoosePipelineStep.java:23)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.lambda$execute$2(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:67)
+	at org.gradle.internal.execution.steps.ExecuteWorkBuildOperationFiringStep.execute(ExecuteWorkBuildOperationFiringStep.java:39)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:46)
+	at org.gradle.internal.execution.steps.IdentityCacheStep.execute(IdentityCacheStep.java:34)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:48)
+	at org.gradle.internal.execution.steps.IdentifyStep.execute(IdentifyStep.java:35)
+	at org.gradle.internal.execution.impl.DefaultExecutionEngine$1.execute(DefaultExecutionEngine.java:61)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.executeIfValid(ExecuteActionsTaskExecuter.java:127)
+	at org.gradle.api.internal.tasks.execution.ExecuteActionsTaskExecuter.execute(ExecuteActionsTaskExecuter.java:116)
+	at org.gradle.api.internal.tasks.execution.FinalizePropertiesTaskExecuter.execute(FinalizePropertiesTaskExecuter.java:46)
+	at org.gradle.api.internal.tasks.execution.ResolveTaskExecutionModeExecuter.execute(ResolveTaskExecutionModeExecuter.java:51)
+	at org.gradle.api.internal.tasks.execution.SkipTaskWithNoActionsExecuter.execute(SkipTaskWithNoActionsExecuter.java:57)
+	at org.gradle.api.internal.tasks.execution.SkipOnlyIfTaskExecuter.execute(SkipOnlyIfTaskExecuter.java:74)
+	at org.gradle.api.internal.tasks.execution.CatchExceptionTaskExecuter.execute(CatchExceptionTaskExecuter.java:36)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.executeTask(EventFiringTaskExecuter.java:77)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:55)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter$1.call(EventFiringTaskExecuter.java:52)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:209)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:204)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:166)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.api.internal.tasks.execution.EventFiringTaskExecuter.execute(EventFiringTaskExecuter.java:52)
+	at org.gradle.execution.plan.LocalTaskNodeExecutor.execute(LocalTaskNodeExecutor.java:42)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:331)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$InvokeNodeExecutorsAction.execute(DefaultTaskExecutionGraph.java:318)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.lambda$execute$0(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:85)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:314)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:459)
+	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:376)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+
+
+BUILD FAILED in 3s
+12 actionable tasks: 1 executed, 11 up-to-date
+Watched directory hierarchies: [C:\Users\USER\Downloads\saga-orchestrator\saga-orchestrator]

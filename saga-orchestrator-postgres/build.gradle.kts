@@ -33,12 +33,16 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("org.slf4j:slf4j-simple:2.0.9")
 
     // Testcontainers: spins up a real, ephemeral PostgreSQL for integration
     // tests (PostgresSagaEventStoreIntegrationTest, etc.) rather than mocking
     // JDBC by hand. Requires local Docker to actually run.
-    testImplementation("org.testcontainers:junit-jupiter:1.20.1")
-    testImplementation("org.testcontainers:postgresql:1.20.1")
+    // Pin Testcontainers to the current stable release to ensure consistent
+    // versions across modules while BOM resolution is deferred.
+    val testcontainersVersion = "2.0.5"
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testcontainersVersion")
+    testImplementation("org.testcontainers:testcontainers-postgresql:$testcontainersVersion")
     testImplementation("org.postgresql:postgresql:42.7.4")
 }
 

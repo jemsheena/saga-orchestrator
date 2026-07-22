@@ -28,11 +28,15 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("org.slf4j:slf4j-simple:2.0.9")
 
     // Testcontainers Kafka module - spins up a real, ephemeral Kafka broker for
     // integration tests. Requires local Docker to actually run.
-    testImplementation("org.testcontainers:junit-jupiter:1.20.1")
-    testImplementation("org.testcontainers:kafka:1.20.1")
+    // Pin Testcontainers to the current stable release to ensure consistent
+    // versions across modules while BOM resolution is deferred.
+    val testcontainersVersion = "2.0.5"
+    testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testcontainersVersion")
+    testImplementation("org.testcontainers:testcontainers-kafka:$testcontainersVersion")
 }
 
 protobuf {
