@@ -16,10 +16,8 @@ repositories {
 }
 
 dependencies {
-    // Milestone 1 has ZERO runtime dependencies on purpose — the domain model
-    // must not depend on Spring, Kafka, or Jackson. Coupling it to a framework
-    // this early would mean we're testing the framework, not our own logic.
-    // Frameworks get wired in at the boundary (Milestone 3+ modules), never here.
+    implementation(project(":saga-orchestrator-messaging"))
+    implementation("com.google.protobuf:protobuf-java:3.25.3")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

@@ -1,10 +1,8 @@
-[![Build](https://github.com/jemsheena/saga-orchestrator/actions/workflows/build.yml/badge.svg)](https://github.com/jemsheena/saga-orchestrator/actions/workflows/build.yml)
-
 # Distributed Saga Orchestrator
 
 An event-sourced, CQRS-backed saga orchestration engine built in Java, designed to coordinate multi-step distributed transactions with automatic compensation on failure — without any participant service ever needing to know about the others.
 
-> **Status:** Core domain model and PostgreSQL persistence layer are implemented and tested. Distributed messaging (Kafka, participant services) has an approved architecture design but is not yet implemented — see [Current Implementation Status](#current-implementation-status) and [Roadmap](#roadmap).
+> **Status:** Core domain model, PostgreSQL persistence, and the initial Milestone 3 payment participant integration are implemented and tested. The messaging layer now includes a transport-agnostic payment handler, inbox/outbox-backed reply flow, and a saga orchestrator boundary that advances saga state from participant replies — see [Current Implementation Status](#current-implementation-status) and [Roadmap](#roadmap).
 
 ## Motivation
 
@@ -28,6 +26,7 @@ Every decision below is documented with the alternative that was considered and 
 - Saga definition versioning — an in-flight saga always keeps executing against the exact definition version it started with, even if a newer version is deployed underneath it
 - A framework-free domain core (zero Spring/JDBC/Jackson dependency) backed by a PostgreSQL adapter module implementing every persistence port
 - 62 tests: 53 run with zero external dependencies; 9 are Testcontainers-backed integration tests against a real, ephemeral PostgreSQL instance
+- Payment participant domain, command handler, outbox-backed reply emission, and saga reply consumption via a new orchestrator boundary
 
 **Designed, not yet built** (see [Roadmap](#roadmap)):
 - Kafka-based command/reply messaging between the orchestrator and independent participant services
@@ -165,8 +164,8 @@ Every one of these calls appends immutable events, keeps `saga_instance_view` tr
 | CQRS read model + synchronous projection | ✅ Implemented, integration tested |
 | Snapshotting | ✅ Implemented, unit + integration tested |
 | REST API | ❌ Not implemented |
-| Kafka messaging / Outbox / Inbox | ❌ Not implemented (architecture approved — see roadmap) |
-| Participant services (payment, inventory, shipping) | ❌ Not implemented |
+| Kafka messaging / Outbox / Inbox | ✅ Implemented for payment participant command/reply flow using the existing abstractions |
+| Participant services (payment, inventory, shipping) | ⚠️ Payment participant implemented; inventory/shipping remain planned |
 | Distributed tracing | ❌ Not implemented |
 
 ## Roadmap

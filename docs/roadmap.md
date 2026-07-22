@@ -9,7 +9,7 @@
 | 2 | Event sourcing over PostgreSQL: event store, snapshots, CQRS read model | ✅ Complete |
 | 2.5 | Code-review fixes: atomic event-append + projection, snapshot failure isolation | ✅ Complete |
 | 3 (architecture) | Kafka-based messaging design: topology, Outbox/Inbox, timeout handling, tracing | ✅ Architecture approved |
-| 3 (implementation) | Building the above | 🚧 Not started in this repository |
+| 3 (implementation) | Building the above | ⚠️ Partially implemented in this repository: payment participant command/reply flow and saga reply orchestration are now wired through the existing inbox/outbox abstractions |
 
 **Everything under "Complete" is real, tested code in this repository — 41 unit tests (core) + 12 unit tests (postgres serialization) passing, plus Testcontainers integration tests for the PostgreSQL adapters.** Everything under Milestone 3 below is a reviewed and approved *design*, included here so the reasoning isn't lost — none of it is implemented yet.
 
@@ -23,6 +23,7 @@
 - Snapshotting for fast rehydration, with schema-version-aware invalidation and independent failure isolation
 - A PostgreSQL adapter module implementing every persistence port the core domain defines, with Flyway-style versioned migrations
 - Full test suite: pure in-memory unit tests for the domain model, plus Testcontainers-backed integration tests for the real PostgreSQL adapters
+- A working payment-participant reference flow that consumes saga commands, persists replies through the outbox, and advances saga state from replies via a new orchestrator boundary
 
 ## What's next: Milestone 3 — Distributed Messaging (Approved Architecture)
 
