@@ -17,6 +17,7 @@ repositories {
 
 dependencies {
     implementation(project(":saga-orchestrator-core"))
+    implementation(project(":saga-orchestrator-messaging"))
 
     // Actual PostgreSQL JDBC driver - needed at RUNTIME to connect, not to
     // compile against this module's use of the java.sql/javax.sql interfaces

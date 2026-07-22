@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package orchestrator.messaging.v1;
+
+option java_package = "com.orchestrator.messaging.proto";
+option java_outer_classname = "SagaMessagingProto";
+option java_multiple_files = true;
+
+// A command dispatched from the orchestrator to exactly one participant,
+// instructing it to execute (or compensate) exactly one saga step.
+//
+// `payload` is intentionally opaque bytes, not a typed sub-message, in this
+// phase: no participant services exist yet (Phase 1 is messaging
+// infrastructure only), so there are no concrete business payload shapes
+// (order amount, SKU, etc.) to define yet. Phase 2/3, when participants are
+// built, will either define per-command-type protobuf messages serialized
+// into this field, or upgrade it to `google.protobuf.Any` if a self-describing
+// envelope becomes valuable at that point — deferred deliberately rather than
+// guessed at now.
+message SagaCommand {
+  string command_id = 1;    // this specific dispatch's identity - used by the Inbox pattern participant-side
+  string saga_id = 2;
+  string step_name = 3;     // matches SagaStep.stepName(), echoed back in the reply for step-correlation
+  string command_type = 4;  // e.g. "ChargePaymentCommand" or "RefundPaymentCommand" - the consumer branches on this
+  bytes payload = 5;
+}
+
+// A reply from a participant back to the orchestrator, reporting the
+// outcome of exactly one previously-dispatched SagaCommand.
+message SagaReply {
+  string event_id = 1;      // this specific reply's identity - used by the orchestrator-side Inbox pattern
+  string saga_id = 2;
+  string step_name = 3;     // echoed from the command this replies to
+  Outcome outcome = 4;
+  string reason = 5;        // populated on FAILURE; empty string means absent (proto3 has no null for scalars)
+  bytes payload = 6;
+
+  enum Outcome {
+    OUTCOME_UNSPECIFIED = 0; // proto3 best practice: zero value is always an explicit "unset", never a valid outcome
+    SUCCESS = 1;
+    FAILURE = 2;
+  }
+}
