@@ -2,7 +2,10 @@ package com.orchestrator.core.repository;
 
 import com.orchestrator.core.engine.SagaInstance;
 import com.orchestrator.core.exception.ConcurrencyConflictException;
+import com.orchestrator.core.projection.SagaInstanceView;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,4 +50,27 @@ public interface SagaInstanceRepository {
      *         not blindly retry the same call)
      */
     void save(SagaInstance instance, EventMetadata metadata);
+
+    /**
+     * Finds all non-terminal saga instances that are eligible for timeout
+     * processing. A saga is eligible if:
+     * - its state is not terminal (not COMPLETED or FAILED)
+     * - its lastActivityAt timestamp + timeout duration is strictly before now()
+     *
+     * <p>This method is intended for use by the timeout scheduler to batch-query
+     * candidates for timeout handling. The scheduler is responsible for:
+     * - loading each returned saga via {@code findById}
+     * - calling {@code handleTimeout()} on it
+     * - persisting the result via {@code save()}
+     *
+     * <p>The query uses {@code SELECT ... FOR UPDATE SKIP LOCKED} at the
+     * database level to ensure multiple scheduler instances processing in
+     * parallel can divide the work without coordination.
+     *
+     * @param limit      the maximum number of expired sagas to return in one batch
+     * @param deadlineNow the cutoff instant — sagas with lastActivityAt < (deadlineNow - timeoutDuration)
+     *                    will be returned
+     * @return a list of view rows for expired, non-terminal sagas; empty if none
+     */
+    List<SagaInstanceView> findExpiredNonTerminalSagas(int limit, Instant deadlineNow);
 }

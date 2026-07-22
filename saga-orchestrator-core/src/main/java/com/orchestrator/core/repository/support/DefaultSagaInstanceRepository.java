@@ -11,6 +11,7 @@ import com.orchestrator.core.repository.SagaInstanceRepository;
 import com.orchestrator.core.repository.SagaSnapshotStore;
 import com.orchestrator.core.repository.TransactionRunner;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -190,5 +191,10 @@ public final class DefaultSagaInstanceRepository implements SagaInstanceReposito
         System.err.println("[WARN] Snapshot persistence failed for saga " + sagaId
                 + " - already-committed events are unaffected; replay will simply be "
                 + "slower for this saga until a future snapshot succeeds. Cause: " + e);
+    }
+
+    @Override
+    public List<SagaInstanceView> findExpiredNonTerminalSagas(int limit, Instant deadlineNow) {
+        return viewStore.findExpiredNonTerminal(limit, deadlineNow);
     }
 }
