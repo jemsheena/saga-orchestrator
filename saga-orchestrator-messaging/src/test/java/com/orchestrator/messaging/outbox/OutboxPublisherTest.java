@@ -113,6 +113,21 @@ class OutboxPublisherTest {
         assertEquals(0, outboxPublisher.pollOnce());
     }
 
+    @Test
+    void start_usesConfiguredInterval_andStopsCleanly() throws InterruptedException {
+        InMemoryOutboxStore store = new InMemoryOutboxStore();
+        InMemoryMessagePublisher publisher = new InMemoryMessagePublisher();
+        OutboxPublisherConfig config = new OutboxPublisherConfig(10, 10, 20);
+        OutboxPublisher outboxPublisher = new OutboxPublisher(store, publisher, config);
+
+        try {
+            outboxPublisher.start();
+            Thread.sleep(50);
+        } finally {
+            outboxPublisher.stop();
+        }
+    }
+
     private static OutboxRecord record(String topic, String key) {
         return new OutboxRecord(UUID.randomUUID(), topic, key, "SagaCommand",
                 new byte[]{1, 2, 3}, UUID.randomUUID(), null, Instant.now());

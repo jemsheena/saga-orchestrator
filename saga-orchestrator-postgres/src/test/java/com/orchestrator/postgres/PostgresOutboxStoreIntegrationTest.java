@@ -89,6 +89,34 @@ class PostgresOutboxStoreIntegrationTest extends AbstractPostgresIntegrationTest
     }
 
     @Test
+    void claimAndDispatch_survivesRestart_andRetriesPendingRecord() throws Exception {
+        store.append(record("topic-a", "key-restart"));
+
+        PostgresOutboxStore firstPoller = new PostgresOutboxStore(dataSource, 3);
+        int firstAttempt = firstPoller.claimAndDispatch(10, r -> {
+            throw new RuntimeException("simulated transient failure");
+        });
+
+        assertEquals(0, firstAttempt);
+
+        PostgresOutboxStore restartedStore = new PostgresOutboxStore(dataSource, 3);
+        AtomicInteger successCalls = new AtomicInteger();
+        int secondAttempt = restartedStore.claimAndDispatch(10, r -> successCalls.incrementAndGet());
+
+        assertEquals(1, secondAttempt);
+        assertEquals(1, successCalls.get());
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT dispatched_at, failed_at, retry_count FROM outbox WHERE message_key = 'key-restart'")) {
+            assertTrue(rs.next());
+            assertEquals(1, rs.getInt("retry_count"));
+            assertTrue(rs.getTimestamp("dispatched_at") != null);
+            assertTrue(rs.getTimestamp("failed_at") == null);
+        }
+    }
+
+    @Test
     void claimAndDispatch_permanentlyFailsRecord_afterRetryLimit() {
         PostgresOutboxStore retryStore = new PostgresOutboxStore(dataSource, 2);
         retryStore.append(record("topic-a", "key-fails"));

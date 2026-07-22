@@ -44,6 +44,7 @@ dependencies {
     val testcontainersVersion = "2.0.5"
     testImplementation("org.testcontainers:testcontainers-junit-jupiter:$testcontainersVersion")
     testImplementation("org.testcontainers:testcontainers-postgresql:$testcontainersVersion")
+    testImplementation("org.testcontainers:testcontainers-kafka:$testcontainersVersion")
     testImplementation("org.postgresql:postgresql:42.7.4")
 }
 

@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Polls an {@link OutboxStore} on a fixed interval and dispatches claimed
@@ -28,24 +29,37 @@ public final class OutboxPublisher {
     private final OutboxStore outboxStore;
     private final MessagePublisher messagePublisher;
     private final int batchSize;
+    private final OutboxPublisherConfig config;
     private final OutboxPublisherMetrics metrics;
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "outbox-publisher");
         t.setDaemon(true);
         return t;
     });
+    private final AtomicBoolean running = new AtomicBoolean(false);
+
+    public OutboxPublisher(OutboxStore outboxStore,
+                           MessagePublisher messagePublisher,
+                           OutboxPublisherConfig config,
+                           OutboxPublisherMetrics metrics) {
+        this.outboxStore = Objects.requireNonNull(outboxStore, "outboxStore must not be null");
+        this.messagePublisher = Objects.requireNonNull(messagePublisher, "messagePublisher must not be null");
+        this.config = Objects.requireNonNull(config, "config must not be null");
+        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
+        this.batchSize = config.batchSize();
+    }
 
     public OutboxPublisher(OutboxStore outboxStore,
                            MessagePublisher messagePublisher,
                            int batchSize,
                            OutboxPublisherMetrics metrics) {
-        this.outboxStore = Objects.requireNonNull(outboxStore, "outboxStore must not be null");
-        this.messagePublisher = Objects.requireNonNull(messagePublisher, "messagePublisher must not be null");
-        this.metrics = Objects.requireNonNull(metrics, "metrics must not be null");
-        if (batchSize < 1) {
-            throw new IllegalArgumentException("batchSize must be >= 1");
-        }
-        this.batchSize = batchSize;
+        this(outboxStore, messagePublisher, new OutboxPublisherConfig(batchSize, 1000, 1000), metrics);
+    }
+
+    public OutboxPublisher(OutboxStore outboxStore,
+                           MessagePublisher messagePublisher,
+                           OutboxPublisherConfig config) {
+        this(outboxStore, messagePublisher, config, new OutboxPublisherMetrics(new SimpleMeterRegistry()));
     }
 
     public OutboxPublisher(OutboxStore outboxStore, MessagePublisher messagePublisher, int batchSize) {
@@ -76,25 +90,46 @@ public final class OutboxPublisher {
         });
     }
 
-    /** Begins polling every {@code intervalMillis}. Returns immediately. */
-    public void start(long intervalMillis) {
-        scheduler.scheduleWithFixedDelay(this::pollOnceSwallowingErrors, 0, intervalMillis, TimeUnit.MILLISECONDS);
+    /** Begins polling using the configured interval and backoff. Returns immediately. */
+    public void start() {
+        start(config.pollIntervalMillis());
     }
 
-    private void pollOnceSwallowingErrors() {
+    public void start(long intervalMillis) {
+        if (intervalMillis < 1) {
+            throw new IllegalArgumentException("intervalMillis must be >= 1");
+        }
+        if (!running.compareAndSet(false, true)) {
+            return; // already started
+        }
+        scheduleNext(0, intervalMillis);
+    }
+
+    private void scheduleNext(long delayMillis, long intervalMillis) {
+        if (!running.get()) {
+            return;
+        }
+        scheduler.schedule(() -> runPollCycle(intervalMillis), delayMillis, TimeUnit.MILLISECONDS);
+    }
+
+    private void runPollCycle(long intervalMillis) {
+        long nextDelayMillis = intervalMillis;
         try {
             pollOnce();
         } catch (RuntimeException e) {
-            // A poll cycle failing outright (e.g. the DB is briefly unreachable) must
-            // not kill the scheduled task permanently - ScheduledExecutorService
-            // silently stops future executions if a scheduled Runnable throws, which
-            // would be a much worse failure mode than logging and trying again next cycle.
-            System.err.println("[WARN] Outbox poll cycle failed, will retry next cycle: " + e);
+            System.err.println("[WARN] Outbox poll cycle failed, will retry after backoff: " + e);
+            nextDelayMillis = config.errorBackoffMillis();
+        }
+        if (running.get()) {
+            scheduleNext(nextDelayMillis, intervalMillis);
         }
     }
 
     /** Stops polling and releases the scheduler thread. */
     public void stop() {
-        scheduler.shutdown();
+        if (!running.compareAndSet(true, false)) {
+            return;
+        }
+        scheduler.shutdownNow();
     }
 }
