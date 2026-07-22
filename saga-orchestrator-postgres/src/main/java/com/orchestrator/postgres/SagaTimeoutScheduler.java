@@ -131,16 +131,34 @@ public final class SagaTimeoutScheduler {
         // will retry on the next polling cycle (the saga will still be in the
         // expired list until it reaches a terminal state or the timeout policy
         // changes).
-        sagaInstanceRepository.save(instance, new EventMetadata(UUID.randomUUID(), null));
-
-        // If timeout triggered compensation, publish a marker to the outbox
-        // so the orchestrator/Kafka consumer knows to start compensation steps.
-        // This is identical to SagaOrchestrator.publishCompensationIfNeeded().
         if (instance.state() == SagaState.COMPENSATING) {
-            publishCompensationMarker(instance);
+            OutboxRecord marker = createTimeoutCompensationMarker(instance);
+            sagaInstanceRepository.save(instance, new EventMetadata(UUID.randomUUID(), null),
+                    () -> outboxStore.append(marker));
+        } else {
+            sagaInstanceRepository.save(instance, new EventMetadata(UUID.randomUUID(), null));
         }
 
         return true;
+    }
+
+    private OutboxRecord createTimeoutCompensationMarker(SagaInstance instance) {
+        SagaReply marker = SagaReply.newBuilder()
+                .setEventId(UUID.randomUUID().toString())
+                .setSagaId(instance.sagaId().toString())
+                .setOutcome(SagaReply.Outcome.FAILURE)
+                .setReason("Saga execution exceeded timeout deadline")
+                .build();
+
+        return new OutboxRecord(
+                UUID.randomUUID(),
+                "saga.compensation.v1",
+                instance.sagaId().toString(),
+                "SagaTimeoutNotification",
+                marker.toByteArray(),
+                UUID.randomUUID(),
+                null,
+                Instant.now());
     }
 
     /**

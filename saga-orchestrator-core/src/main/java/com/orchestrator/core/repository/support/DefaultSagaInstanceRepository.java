@@ -124,25 +124,29 @@ public final class DefaultSagaInstanceRepository implements SagaInstanceReposito
      */
     @Override
     public void save(SagaInstance instance, EventMetadata metadata) {
+        save(instance, metadata, () -> {
+        });
+    }
+
+    @Override
+    public void save(SagaInstance instance, EventMetadata metadata, Runnable additionalTransactionalWork) {
         Objects.requireNonNull(instance, "instance must not be null");
         Objects.requireNonNull(metadata, "metadata must not be null");
+        Objects.requireNonNull(additionalTransactionalWork, "additionalTransactionalWork must not be null");
 
         List<SagaDomainEvent> newEvents = instance.pullDomainEvents();
-        if (newEvents.isEmpty()) {
-            return; // no-op, per interface contract
-        }
-
         long versionBeforeThisBatch = instance.version() - newEvents.size();
 
-        // ATOMIC: event append and read-model projection succeed or fail together.
-        // This is the actual fix for the Milestone 2 review's Critical Finding #1 -
-        // previously these were two separately-committed operations. See class
-        // javadoc for the consistency/availability trade-off this now enforces.
+        // ATOMIC: event append, read-model projection, and any additional
+        // transactional work (e.g. outbox writes) succeed or fail together.
         transactionRunner.runInTransaction(() -> {
-            eventStore.append(instance.sagaId(), versionBeforeThisBatch, newEvents, metadata);
-            for (SagaDomainEvent event : newEvents) {
-                projector.project(event, viewStore);
+            if (!newEvents.isEmpty()) {
+                eventStore.append(instance.sagaId(), versionBeforeThisBatch, newEvents, metadata);
+                for (SagaDomainEvent event : newEvents) {
+                    projector.project(event, viewStore);
+                }
             }
+            additionalTransactionalWork.run();
         });
 
         // NOT part of the transaction above, and deliberately independently

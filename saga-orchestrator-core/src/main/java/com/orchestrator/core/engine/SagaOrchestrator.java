@@ -56,13 +56,8 @@ public final class SagaOrchestrator implements MessageHandler {
             instance.failCurrentStep(definition, reply.getStepName(), reply.getReason());
         }
 
-        sagaInstanceRepository.save(instance, new EventMetadata(headers.correlationId(), headers.causationId()));
-        publishCompensationIfNeeded(instance, definition, reply, headers);
-    }
-
-    private void publishCompensationIfNeeded(SagaInstance instance, SagaDefinition definition, SagaReply reply, MessageHeaders headers) {
         if (instance.state() == SagaState.COMPENSATING) {
-            outboxStore.append(new OutboxRecord(
+            OutboxRecord compensationMarker = new OutboxRecord(
                     UUID.randomUUID(),
                     "saga.compensation.v1",
                     instance.sagaId().toString(),
@@ -70,7 +65,12 @@ public final class SagaOrchestrator implements MessageHandler {
                     reply.toByteArray(),
                     headers.correlationId(),
                     headers.causationId(),
-                    Instant.now()));
+                    Instant.now());
+
+            sagaInstanceRepository.save(instance, new EventMetadata(headers.correlationId(), headers.causationId()),
+                    () -> outboxStore.append(compensationMarker));
+        } else {
+            sagaInstanceRepository.save(instance, new EventMetadata(headers.correlationId(), headers.causationId()));
         }
     }
 }
