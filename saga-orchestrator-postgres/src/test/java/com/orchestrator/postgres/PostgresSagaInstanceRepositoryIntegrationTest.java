@@ -43,9 +43,7 @@ class PostgresSagaInstanceRepositoryIntegrationTest extends AbstractPostgresInte
         PostgresSagaInstanceViewStore viewStore = new PostgresSagaInstanceViewStore(dataSource);
         JdbcTransactionRunner transactionRunner = new JdbcTransactionRunner(dataSource);
         repository = new DefaultSagaInstanceRepository(
-                rawEventStore, snapshotStore, viewStore, new SagaProjector(), transactionRunner,
-                new com.orchestrator.core.repository.support.InMemorySagaDefinitionRegistry(),
-                20, 1);
+                rawEventStore, snapshotStore, viewStore, new SagaProjector(), transactionRunner, 20, 1);
     }
 
     @Test
@@ -107,7 +105,6 @@ class PostgresSagaInstanceRepositoryIntegrationTest extends AbstractPostgresInte
                 alwaysFailingViewStore,
                 new SagaProjector(),
                 new JdbcTransactionRunner(dataSource),
-                new com.orchestrator.core.repository.support.InMemorySagaDefinitionRegistry(),
                 20, 1);
 
         SagaInstance instance = SagaInstance.start(def);
@@ -132,7 +129,6 @@ class PostgresSagaInstanceRepositoryIntegrationTest extends AbstractPostgresInte
                 new PostgresSagaInstanceViewStore(dataSource),
                 new SagaProjector(),
                 new JdbcTransactionRunner(dataSource),
-                new com.orchestrator.core.repository.support.InMemorySagaDefinitionRegistry(),
                 2, // snapshot every 2 events - low, to actually exercise the path in this test
                 1);
 
@@ -177,7 +173,6 @@ class PostgresSagaInstanceRepositoryIntegrationTest extends AbstractPostgresInte
                 new PostgresSagaInstanceViewStore(dataSource),
                 new SagaProjector(),
                 new JdbcTransactionRunner(dataSource),
-                new com.orchestrator.core.repository.support.InMemorySagaDefinitionRegistry(),
                 1, // interval=1: every save crosses a snapshot boundary
                 1);
 

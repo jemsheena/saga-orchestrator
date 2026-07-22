@@ -36,7 +36,7 @@ class PostgresSagaEventStoreIntegrationTest extends AbstractPostgresIntegrationT
     @Test
     void appendThenLoad_roundTripsEventsInOrder() {
         UUID sagaId = UUID.randomUUID();
-        SagaStarted started = new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), Instant.now());
+        SagaStarted started = new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), null, Instant.now());
         StepCompleted stepCompleted = new StepCompleted(sagaId, "ChargePayment", 0, Instant.now());
 
         store.append(sagaId, 0, List.of(started), EventMetadata.newCorrelation());
@@ -52,7 +52,7 @@ class PostgresSagaEventStoreIntegrationTest extends AbstractPostgresIntegrationT
     @Test
     void appendWithWrongExpectedVersion_throwsConcurrencyConflictException() {
         UUID sagaId = UUID.randomUUID();
-        SagaStarted started = new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), Instant.now());
+        SagaStarted started = new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), null, Instant.now());
         store.append(sagaId, 0, List.of(started), EventMetadata.newCorrelation());
 
         StepCompleted stepCompleted = new StepCompleted(sagaId, "ChargePayment", 0, Instant.now());
@@ -67,7 +67,7 @@ class PostgresSagaEventStoreIntegrationTest extends AbstractPostgresIntegrationT
     @Test
     void loadEventsAfterSequence_returnsOnlyLaterEvents() {
         UUID sagaId = UUID.randomUUID();
-        store.append(sagaId, 0, List.of(new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), Instant.now())),
+        store.append(sagaId, 0, List.of(new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), null, Instant.now())),
                 EventMetadata.newCorrelation());
         store.append(sagaId, 1, List.of(new StepCompleted(sagaId, "ChargePayment", 0, Instant.now())),
                 EventMetadata.newCorrelation());
@@ -83,7 +83,7 @@ class PostgresSagaEventStoreIntegrationTest extends AbstractPostgresIntegrationT
     @Test
     void appendingABatch_assignsConsecutiveSequenceNumbers_evenAcrossMultipleEventsInOneCall() {
         UUID sagaId = UUID.randomUUID();
-        store.append(sagaId, 0, List.of(new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), Instant.now())),
+        store.append(sagaId, 0, List.of(new SagaStarted(sagaId, new SagaDefinitionReference("OrderFulfillment", 1), null, Instant.now())),
                 EventMetadata.newCorrelation());
 
         // Simulates failCurrentStep's two-event batch (StepFailed + SagaCompensationStarted).

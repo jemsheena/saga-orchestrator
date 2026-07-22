@@ -11,6 +11,7 @@ import com.orchestrator.core.event.SagaTimedOut;
 import com.orchestrator.core.event.StepCompleted;
 import com.orchestrator.core.event.StepFailed;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
@@ -56,7 +57,8 @@ public final class HandWrittenJsonEventSerializer implements SagaEventSerializer
 
         switch (event) {
             case SagaStarted e -> w.field("sagaType", e.definitionReference().sagaType())
-                    .field("definitionVersion", e.definitionReference().version());
+                    .field("definitionVersion", e.definitionReference().version())
+                    .field("timeoutDuration", e.timeoutDuration() == null ? null : e.timeoutDuration().toString());
             case StepCompleted e -> w.field("stepName", e.stepName()).field("stepIndex", e.stepIndex());
             case SagaCompleted e -> {
                 // no additional fields
@@ -94,6 +96,7 @@ public final class HandWrittenJsonEventSerializer implements SagaEventSerializer
         return switch (eventType) {
             case "SagaStarted" -> new SagaStarted(sagaId,
                     new SagaDefinitionReference(fields.get("sagaType"), Integer.parseInt(fields.get("definitionVersion"))),
+                    fields.get("timeoutDuration") == null ? null : Duration.parse(fields.get("timeoutDuration")),
                     occurredAt);
             case "StepCompleted" -> new StepCompleted(sagaId,
                     fields.get("stepName"), Integer.parseInt(fields.get("stepIndex")), occurredAt);

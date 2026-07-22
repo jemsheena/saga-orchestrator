@@ -28,7 +28,7 @@ class HandWrittenJsonEventSerializerTest {
 
     static Stream<SagaDomainEvent> allEventTypes() {
         return Stream.of(
-                new SagaStarted(SAGA_ID, new SagaDefinitionReference("OrderFulfillment", 1), NOW),
+                new SagaStarted(SAGA_ID, new SagaDefinitionReference("OrderFulfillment", 1), null, NOW),
                 new StepCompleted(SAGA_ID, "ChargePayment", 0, NOW),
                 new SagaCompleted(SAGA_ID, NOW),
                 new StepFailed(SAGA_ID, "CreateShippingLabel", 2, "carrier API down", NOW),
@@ -76,7 +76,7 @@ class HandWrittenJsonEventSerializerTest {
 
     @Test
     void sagaStarted_flattensAndReassemblesDefinitionReferenceCorrectly() {
-        SagaStarted original = new SagaStarted(SAGA_ID, new SagaDefinitionReference("QuickTask", 7), NOW);
+        SagaStarted original = new SagaStarted(SAGA_ID, new SagaDefinitionReference("QuickTask", 7), null, NOW);
 
         String json = serializer.serialize(original);
         SagaStarted rebuilt = (SagaStarted) serializer.deserialize("SagaStarted", 1, json);

@@ -152,7 +152,9 @@ public final class SagaInstance {
         Objects.requireNonNull(clock, "clock must not be null");
 
         SagaInstance instance = new SagaInstance(UUID.randomUUID(), definition.reference(), clock);
-        instance.recordEvent(new SagaStarted(instance.sagaId, instance.definitionReference, instance.now()));
+        instance.recordEvent(new SagaStarted(instance.sagaId, instance.definitionReference,
+                definition.timeoutPolicy() == null ? null : definition.timeoutPolicy().timeoutDuration(),
+                instance.now()));
         return instance;
     }
 
@@ -170,7 +172,9 @@ public final class SagaInstance {
         Objects.requireNonNull(clock, "clock must not be null");
 
         SagaInstance instance = new SagaInstance(sagaId, definition.reference(), clock);
-        instance.recordEvent(new SagaStarted(instance.sagaId, instance.definitionReference, instance.now()));
+        instance.recordEvent(new SagaStarted(instance.sagaId, instance.definitionReference,
+                definition.timeoutPolicy() == null ? null : definition.timeoutPolicy().timeoutDuration(),
+                instance.now()));
         return instance;
     }
 

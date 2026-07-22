@@ -2,6 +2,7 @@ package com.orchestrator.core.event;
 
 import com.orchestrator.core.definition.SagaDefinitionReference;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ import java.util.UUID;
 public record SagaStarted(
         UUID sagaId,
         SagaDefinitionReference definitionReference,
+        Duration timeoutDuration,
         Instant occurredAt
 ) implements SagaDomainEvent {
 }
