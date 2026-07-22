@@ -46,7 +46,6 @@ class SagaOrchestratorTest {
                 new InMemorySagaInstanceViewStore(),
                 new SagaProjector(),
                 new ImmediateTransactionRunner(),
-                registry,
                 10,
                 1);
 
@@ -92,7 +91,6 @@ class SagaOrchestratorTest {
                 new InMemorySagaInstanceViewStore(),
                 new SagaProjector(),
                 new ImmediateTransactionRunner(),
-                registry,
                 10,
                 1);
 

@@ -91,7 +91,7 @@ class DefaultSagaInstanceRepositoryTest {
         InMemorySagaInstanceViewStore viewStore = new InMemorySagaInstanceViewStore();
         DefaultSagaInstanceRepository repo = new DefaultSagaInstanceRepository(
                 eventStore, snapshotStore, viewStore, new SagaProjector(), new ImmediateTransactionRunner(),
-                new InMemorySagaDefinitionRegistry(), 20, 1);
+                20, 1);
 
         SagaDefinition def = threeStepDefinition();
         SagaInstance instance = SagaInstance.start(def);
@@ -112,7 +112,7 @@ class DefaultSagaInstanceRepositoryTest {
         InMemorySagaInstanceViewStore viewStore = new InMemorySagaInstanceViewStore();
         DefaultSagaInstanceRepository repo = new DefaultSagaInstanceRepository(
                 eventStore, snapshotStore, viewStore, new SagaProjector(), new ImmediateTransactionRunner(),
-                new InMemorySagaDefinitionRegistry(), 3, 1);
+                3, 1);
 
         SagaDefinition def = threeStepDefinition();
         SagaInstance instance = SagaInstance.start(def);
@@ -137,10 +137,10 @@ class DefaultSagaInstanceRepositoryTest {
         InMemorySagaInstanceViewStore viewStore = new InMemorySagaInstanceViewStore();
         DefaultSagaInstanceRepository snapshottingRepo = new DefaultSagaInstanceRepository(
                 eventStore, snapshotStore, viewStore, new SagaProjector(), new ImmediateTransactionRunner(),
-                new InMemorySagaDefinitionRegistry(), 2, 1);
+                2, 1);
         DefaultSagaInstanceRepository noSnapshotRepo = new DefaultSagaInstanceRepository(
                 eventStore, new InMemorySagaSnapshotStore(), viewStore, new SagaProjector(), new ImmediateTransactionRunner(),
-                new InMemorySagaDefinitionRegistry(), 999_999, 1);
+                999_999, 1);
 
         SagaDefinition def = threeStepDefinition();
         SagaInstance instance = SagaInstance.start(def);
@@ -172,7 +172,7 @@ class DefaultSagaInstanceRepositoryTest {
         AlwaysThrowingSnapshotStore throwingSnapshotStore = new AlwaysThrowingSnapshotStore();
         DefaultSagaInstanceRepository repo = new DefaultSagaInstanceRepository(
                 eventStore, throwingSnapshotStore, viewStore, new SagaProjector(),
-                new ImmediateTransactionRunner(), new InMemorySagaDefinitionRegistry(), 1, 1); // interval=1: EVERY save crosses a snapshot boundary
+                new ImmediateTransactionRunner(), 1, 1); // interval=1: EVERY save crosses a snapshot boundary
 
         SagaDefinition def = threeStepDefinition();
         SagaInstance instance = SagaInstance.start(def);
@@ -206,7 +206,6 @@ class DefaultSagaInstanceRepositoryTest {
                 new InMemorySagaInstanceViewStore(),
                 new SagaProjector(),
                 new ImmediateTransactionRunner(),
-                new InMemorySagaDefinitionRegistry(),
                 snapshotInterval,
                 1);
     }

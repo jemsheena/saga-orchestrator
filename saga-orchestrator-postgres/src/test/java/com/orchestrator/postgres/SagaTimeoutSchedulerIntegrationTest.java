@@ -5,6 +5,7 @@ import com.orchestrator.core.definition.SagaStep;
 import com.orchestrator.core.definition.TimeoutPolicy;
 import com.orchestrator.core.engine.SagaInstance;
 import com.orchestrator.core.engine.SagaState;
+import com.orchestrator.core.projection.SagaInstanceView;
 import com.orchestrator.core.projection.SagaProjector;
 import com.orchestrator.core.repository.EventMetadata;
 import com.orchestrator.core.repository.SagaDefinitionRegistry;
@@ -43,6 +44,7 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
     private SagaDefinitionRegistry registry;
     private RecordingOutboxStore outboxStore;
     private SagaTimeoutScheduler scheduler;
+    private PostgresSagaInstanceViewStore viewStore;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -53,7 +55,7 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
 
         PostgresSagaEventStore eventStore = new PostgresSagaEventStore(dataSource, new HandWrittenJsonEventSerializer());
         PostgresSagaSnapshotStore snapshotStore = new PostgresSagaSnapshotStore(dataSource);
-        PostgresSagaInstanceViewStore viewStore = new PostgresSagaInstanceViewStore(dataSource);
+        viewStore = new PostgresSagaInstanceViewStore(dataSource);
         JdbcTransactionRunner transactionRunner = new JdbcTransactionRunner(dataSource);
 
         repository = new DefaultSagaInstanceRepository(
@@ -85,9 +87,13 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
         assertFalse(midway.isTerminal());
         assertEquals(SagaState.STEP_COMPLETED, midway.state());
 
-        // Simulate time passing (scheduler runs after timeout deadline)
-        // In a real system, this happens naturally. For testing, we can
-        // verify by checking the projection and triggering the scheduler.
+        // Simulate time passing so the 1-second timeout becomes expired.
+        try {
+            Thread.sleep(1100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
 
         // Process the batch - should find and timeout the saga
         int processed = scheduler.processBatch();
@@ -154,6 +160,14 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
         assertEquals(SagaState.STARTED, started.state());
         assertEquals(0, started.currentStepIndex());
 
+        // Simulate time passing so the 1-second timeout becomes expired.
+        try {
+            Thread.sleep(1100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+
         // Process the batch - timeout on first step should FAIL (not compensate)
         int processed = scheduler.processBatch();
         assertEquals(1, processed);
@@ -189,13 +203,23 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
             sagaIds.add(instance.sagaId());
         }
 
+        // Simulate time passing so the 1-second timeout becomes expired.
+        try {
+            Thread.sleep(1100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        }
+
+        SagaTimeoutScheduler smallBatchScheduler = new SagaTimeoutScheduler(repository, registry, outboxStore, 2);
+
         // Process with batchSize=2 - should process 2 in first call
-        int processed1 = scheduler.processBatch();
+        int processed1 = smallBatchScheduler.processBatch();
         assertEquals(2, processed1);
         assertEquals(2, outboxStore.records.size()); // 2 compensation markers
 
         // Process again - should get the 3rd one
-        int processed2 = scheduler.processBatch();
+        int processed2 = smallBatchScheduler.processBatch();
         assertEquals(1, processed2);
         assertEquals(3, outboxStore.records.size()); // 3 total compensation markers
 
