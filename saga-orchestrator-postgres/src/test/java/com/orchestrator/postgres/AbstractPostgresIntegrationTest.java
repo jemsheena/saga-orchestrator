@@ -41,6 +41,8 @@ abstract class AbstractPostgresIntegrationTest {
         try (Connection connection = dataSource.getConnection()) {
             runScript(connection, "/db/migration/V1__event_store.sql");
             runScript(connection, "/db/migration/V2__snapshots_and_view.sql");
+            runScript(connection, "/db/migration/V3__outbox_inbox.sql");
+            runScript(connection, "/db/migration/V4__timeout_fields.sql");
         }
     }
 
