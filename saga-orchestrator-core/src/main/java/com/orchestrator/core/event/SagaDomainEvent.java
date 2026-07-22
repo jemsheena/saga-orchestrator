@@ -20,7 +20,7 @@ import java.util.UUID;
  */
 public sealed interface SagaDomainEvent
         permits SagaStarted, StepCompleted, SagaCompleted, StepFailed,
-        SagaCompensationStarted, CompensationStepCompleted, SagaFailed {
+        SagaCompensationStarted, CompensationStepCompleted, SagaFailed, SagaTimedOut {
 
     UUID sagaId();
 
