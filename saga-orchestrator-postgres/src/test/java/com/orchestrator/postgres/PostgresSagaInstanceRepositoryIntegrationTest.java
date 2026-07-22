@@ -10,10 +10,14 @@ import com.orchestrator.core.projection.SagaInstanceViewStore;
 import com.orchestrator.core.projection.SagaProjector;
 import com.orchestrator.core.repository.EventMetadata;
 import com.orchestrator.core.repository.support.DefaultSagaInstanceRepository;
+import com.orchestrator.messaging.outbox.OutboxRecord;
 import com.orchestrator.postgres.serialization.HandWrittenJsonEventSerializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -145,6 +149,55 @@ class PostgresSagaInstanceRepositoryIntegrationTest extends AbstractPostgresInte
         SagaInstance rehydrated = snapshottingRepo.findById(instance.sagaId()).orElseThrow();
         assertEquals(SagaState.STEP_COMPLETED, rehydrated.state());
         assertEquals(1, rehydrated.currentStepIndex());
+    }
+
+    @Test
+    void transactionalOutboxWrite_rollbackRollsBackEventsAndOutboxRow() throws Exception {
+        SagaDefinition def = threeStepDefinition();
+        PostgresOutboxStore outboxStore = new PostgresOutboxStore(dataSource);
+
+        SagaInstanceViewStore alwaysFailingViewStore = new SagaInstanceViewStore() {
+            @Override
+            public void upsert(SagaInstanceView view) {
+                throw new RuntimeException("simulated projection failure");
+            }
+
+            @Override
+            public Optional<SagaInstanceView> findById(UUID sagaId) {
+                return Optional.empty();
+            }
+
+            @Override
+            public List<SagaInstanceView> findExpiredNonTerminal(int limit, Instant deadlineNow) {
+                return List.of();
+            }
+        };
+
+        DefaultSagaInstanceRepository brokenRepo = new DefaultSagaInstanceRepository(
+                rawEventStore,
+                new PostgresSagaSnapshotStore(dataSource),
+                alwaysFailingViewStore,
+                new SagaProjector(),
+                new JdbcTransactionRunner(dataSource),
+                20, 1);
+
+        SagaInstance instance = SagaInstance.start(def);
+        OutboxRecord marker = new OutboxRecord(UUID.randomUUID(), "saga.compensation.v1",
+                instance.sagaId().toString(), "SagaCompensation", new byte[]{1, 2, 3},
+                UUID.randomUUID(), null, Instant.now());
+
+        assertThrows(RuntimeException.class, () -> brokenRepo.save(instance, EventMetadata.newCorrelation(),
+                () -> outboxStore.append(marker)));
+
+        assertTrue(rawEventStore.loadEvents(instance.sagaId()).isEmpty(),
+                "event append should have been rolled back along with the failed transaction");
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT count(*) FROM outbox")) {
+            assertTrue(rs.next());
+            assertEquals(0, rs.getInt(1), "outbox row should have been rolled back along with the failed transaction");
+        }
     }
 
     /**

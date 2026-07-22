@@ -79,7 +79,7 @@ abstract class AbstractPostgresIntegrationTest {
     void truncateAllTables() throws Exception {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.execute("TRUNCATE saga_event, saga_stream_head, saga_snapshot, saga_instance_view");
+            statement.execute("TRUNCATE saga_event, saga_stream_head, saga_snapshot, saga_instance_view, outbox, inbox");
         }
     }
 }
