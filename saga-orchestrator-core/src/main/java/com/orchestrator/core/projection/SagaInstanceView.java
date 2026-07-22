@@ -17,6 +17,12 @@ import java.util.UUID;
  * constructed for every projection update rather than mutating one in place,
  * which keeps {@link SagaProjector} straightforwardly a pure function
  * (event + current view in, new view out).
+ *
+ * <p><b>Timeout fields:</b> {@code lastActivityAt} tracks the most recent
+ * event for a saga, and {@code timeoutExpiredAt} is pre-computed from
+ * {@code lastActivityAt} and a persisted timeout deadline. The scheduler
+ * queries "all sagas where timeoutExpiredAt is not null and is in the past
+ * and state is not terminal" to find candidates for timeout processing.
  */
 public record SagaInstanceView(
         UUID sagaId,
@@ -26,6 +32,8 @@ public record SagaInstanceView(
         Instant startedAt,
         Instant completedAt,
         Long durationMs,
-        String lastError
+        String lastError,
+        Instant lastActivityAt,
+        Instant timeoutExpiredAt
 ) {
 }

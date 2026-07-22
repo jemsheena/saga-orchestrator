@@ -7,6 +7,7 @@ import com.orchestrator.core.event.SagaCompleted;
 import com.orchestrator.core.event.SagaDomainEvent;
 import com.orchestrator.core.event.SagaFailed;
 import com.orchestrator.core.event.SagaStarted;
+import com.orchestrator.core.event.SagaTimedOut;
 import com.orchestrator.core.event.StepCompleted;
 import com.orchestrator.core.event.StepFailed;
 
@@ -36,13 +37,14 @@ public final class SagaProjector {
         switch (event) {
             case SagaStarted e -> store.upsert(new SagaInstanceView(
                     e.sagaId(), e.definitionReference().sagaType(), SagaState.STARTED,
-                    0, e.occurredAt(), null, null, null));
+                    0, e.occurredAt(), null, null, null, e.occurredAt(), null));
 
             case StepCompleted e -> {
                 SagaInstanceView current = requireView(store, e.sagaId());
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), SagaState.STEP_COMPLETED,
-                        e.stepIndex() + 1, current.startedAt(), null, null, current.lastError()));
+                        e.stepIndex() + 1, current.startedAt(), null, null, current.lastError(),
+                        e.occurredAt(), current.timeoutExpiredAt()));
             }
 
             case SagaCompleted e -> {
@@ -50,7 +52,8 @@ public final class SagaProjector {
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), SagaState.COMPLETED,
                         current.currentStepIndex(), current.startedAt(), e.occurredAt(),
-                        durationMillis(current.startedAt(), e.occurredAt()), null));
+                        durationMillis(current.startedAt(), e.occurredAt()), null,
+                        e.occurredAt(), null));
             }
 
             case StepFailed e -> {
@@ -61,14 +64,15 @@ public final class SagaProjector {
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), current.state(),
                         current.currentStepIndex(), current.startedAt(), current.completedAt(),
-                        current.durationMs(), e.reason()));
+                        current.durationMs(), e.reason(), e.occurredAt(), current.timeoutExpiredAt()));
             }
 
             case SagaCompensationStarted e -> {
                 SagaInstanceView current = requireView(store, e.sagaId());
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), SagaState.COMPENSATING,
-                        current.currentStepIndex(), current.startedAt(), null, null, current.lastError()));
+                        current.currentStepIndex(), current.startedAt(), null, null, current.lastError(),
+                        e.occurredAt(), current.timeoutExpiredAt()));
             }
 
             case CompensationStepCompleted e -> {
@@ -77,6 +81,11 @@ public final class SagaProjector {
                 // that way until the terminal SagaFailed event. Explicitly a no-op branch
                 // rather than an omitted case, so the exhaustive switch documents that
                 // this was a deliberate choice, not a missed event type.
+                SagaInstanceView current = requireView(store, e.sagaId());
+                store.upsert(new SagaInstanceView(
+                        current.sagaId(), current.sagaType(), current.state(),
+                        current.currentStepIndex(), current.startedAt(), current.completedAt(),
+                        current.durationMs(), current.lastError(), e.occurredAt(), current.timeoutExpiredAt()));
             }
 
             case SagaFailed e -> {
@@ -84,7 +93,19 @@ public final class SagaProjector {
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), SagaState.FAILED,
                         current.currentStepIndex(), current.startedAt(), e.occurredAt(),
-                        durationMillis(current.startedAt(), e.occurredAt()), current.lastError()));
+                        durationMillis(current.startedAt(), e.occurredAt()), current.lastError(),
+                        e.occurredAt(), null));
+            }
+
+            case SagaTimedOut e -> {
+                // Informational only — timeout itself doesn't change the projection state.
+                // The actual state transition comes from the following event
+                // (SagaFailed or SagaCompensationStarted), just like StepFailed.
+                SagaInstanceView current = requireView(store, e.sagaId());
+                store.upsert(new SagaInstanceView(
+                        current.sagaId(), current.sagaType(), current.state(),
+                        current.currentStepIndex(), current.startedAt(), current.completedAt(),
+                        current.durationMs(), current.lastError(), e.occurredAt(), current.timeoutExpiredAt()));
             }
         }
     }
