@@ -11,7 +11,6 @@ import com.orchestrator.messaging.outbox.OutboxRecord;
 import com.orchestrator.messaging.outbox.OutboxStore;
 import com.orchestrator.messaging.proto.SagaReply;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -52,18 +51,15 @@ public final class SagaTimeoutScheduler {
     private final SagaInstanceRepository sagaInstanceRepository;
     private final SagaDefinitionRegistry sagaDefinitionRegistry;
     private final OutboxStore outboxStore;
-    private final Clock clock;
     private final int batchSize;
 
     public SagaTimeoutScheduler(SagaInstanceRepository sagaInstanceRepository,
                                 SagaDefinitionRegistry sagaDefinitionRegistry,
                                 OutboxStore outboxStore,
-                                int batchSize,
-                                Clock clock) {
+                                int batchSize) {
         this.sagaInstanceRepository = Objects.requireNonNull(sagaInstanceRepository, "sagaInstanceRepository must not be null");
         this.sagaDefinitionRegistry = Objects.requireNonNull(sagaDefinitionRegistry, "sagaDefinitionRegistry must not be null");
         this.outboxStore = Objects.requireNonNull(outboxStore, "outboxStore must not be null");
-        this.clock = Objects.requireNonNull(clock, "clock must not be null");
         if (batchSize < 1) {
             throw new IllegalArgumentException("batchSize must be >= 1");
         }
@@ -86,7 +82,7 @@ public final class SagaTimeoutScheduler {
      * claimed by exactly one replica per invocation.
      */
     public int processBatch() {
-        Instant now = clock.instant();
+        Instant now = Instant.now();
         List<SagaInstanceView> expiredViews = sagaInstanceRepository.findExpiredNonTerminalSagas(batchSize, now);
 
         int processed = 0;
@@ -177,6 +173,6 @@ public final class SagaTimeoutScheduler {
                 marker.toByteArray(),
                 UUID.randomUUID(), // new correlation ID for timeout event
                 null, // no causation ID (this is spontaneous, not driven by a request)
-                clock.instant()));
+                Instant.now()));
     }
 }
