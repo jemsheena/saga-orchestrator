@@ -54,13 +54,22 @@ abstract class AbstractPostgresIntegrationTest {
             }
             sql = new String(in.readAllBytes(), StandardCharsets.UTF_8);
         }
-        // Simple statement splitting on ';' - adequate for these two migration
-        // files (no stored procedures/functions containing embedded semicolons).
+        // Remove SQL line comments ("-- ...") before splitting on ';' so that
+        // semicolons inside comments don't split statements unexpectedly.
+        String withoutLineComments = sql.lines()
+                .filter(line -> !line.trim().startsWith("--"))
+                .reduce(new StringBuilder(), (sb, l) -> sb.append(l).append('\n'), (a, b) -> a.append(b))
+                .toString();
+
         try (Statement statement = connection.createStatement()) {
-            for (String rawStatement : sql.split(";")) {
+            for (String rawStatement : withoutLineComments.split(";")) {
                 String trimmed = rawStatement.trim();
-                if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
-                    statement.execute(trimmed);
+                if (!trimmed.isEmpty()) {
+                    try {
+                        statement.execute(trimmed);
+                    } catch (java.sql.SQLException e) {
+                        throw new java.sql.SQLException("Error executing SQL statement: " + System.lineSeparator() + trimmed, e);
+                    }
                 }
             }
         }
