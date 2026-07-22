@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * makes at-least-once real rather than aspirational, and is exactly why
  * {@code InboxStore} is a Phase 1 requirement, not optional polish.
  */
-public final class KafkaMessageConsumer implements MessageConsumer {
+public final class KafkaMessageConsumer implements MessageConsumer, AutoCloseable {
 
     private static final String HEADER_CORRELATION_ID = "correlationId";
     private static final String HEADER_CAUSATION_ID = "causationId";

@@ -4,6 +4,9 @@ import com.orchestrator.messaging.outbox.OutboxRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -83,6 +86,37 @@ class PostgresOutboxStoreIntegrationTest extends AbstractPostgresIntegrationTest
         // Every dispatched ID must be unique - SKIP LOCKED must never let two
         // pollers claim (and thus double-dispatch) the same row.
         assertEquals(dispatchedIds.size(), java.util.Set.copyOf(dispatchedIds).size());
+    }
+
+    @Test
+    void claimAndDispatch_permanentlyFailsRecord_afterRetryLimit() {
+        PostgresOutboxStore retryStore = new PostgresOutboxStore(dataSource, 2);
+        retryStore.append(record("topic-a", "key-fails"));
+
+        int firstAttempt = retryStore.claimAndDispatch(10, r -> {
+            throw new RuntimeException("simulated failure 1");
+        });
+        assertEquals(0, firstAttempt);
+
+        int secondAttempt = retryStore.claimAndDispatch(10, r -> {
+            throw new RuntimeException("simulated failure 2");
+        });
+        assertEquals(0, secondAttempt);
+
+        int thirdAttempt = retryStore.claimAndDispatch(10, r -> {
+            throw new RuntimeException("simulated failure 3");
+        });
+        assertEquals(0, thirdAttempt, "Record should no longer be claimable after exceeding retry limit");
+
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery("SELECT retry_count, failed_at IS NOT NULL FROM outbox WHERE message_key = 'key-fails'")) {
+            assertTrue(rs.next());
+            assertEquals(2, rs.getInt(1));
+            assertTrue(rs.getBoolean(2));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static OutboxRecord record(String topic, String key) {

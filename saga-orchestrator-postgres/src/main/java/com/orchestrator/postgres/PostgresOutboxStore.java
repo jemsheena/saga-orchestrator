@@ -41,18 +41,29 @@ import java.util.UUID;
  */
 public final class PostgresOutboxStore implements OutboxStore {
 
+    private static final int DEFAULT_MAX_RETRY_COUNT = 5;
+
     private final DataSource dataSource;
+    private final int maxRetryCount;
 
     public PostgresOutboxStore(DataSource dataSource) {
+        this(dataSource, DEFAULT_MAX_RETRY_COUNT);
+    }
+
+    public PostgresOutboxStore(DataSource dataSource, int maxRetryCount) {
         this.dataSource = Objects.requireNonNull(dataSource, "dataSource must not be null");
+        if (maxRetryCount < 1) {
+            throw new IllegalArgumentException("maxRetryCount must be >= 1");
+        }
+        this.maxRetryCount = maxRetryCount;
     }
 
     @Override
     public void append(OutboxRecord record) {
         Objects.requireNonNull(record, "record must not be null");
         String sql = "INSERT INTO outbox "
-                + "(outbox_id, topic, message_key, message_type, payload, correlation_id, causation_id, created_at) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                + "(outbox_id, topic, message_key, message_type, payload, correlation_id, causation_id, created_at, retry_count, failed_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (ManagedConnection managed = ManagedConnection.obtain(dataSource)) {
             Connection connection = managed.connection();
@@ -69,6 +80,8 @@ public final class PostgresOutboxStore implements OutboxStore {
                     stmt.setNull(7, java.sql.Types.OTHER);
                 }
                 stmt.setTimestamp(8, Timestamp.from(record.createdAt()));
+                stmt.setInt(9, 0);
+                stmt.setNull(10, java.sql.Types.TIMESTAMP);
                 stmt.executeUpdate();
                 managed.commitIfOwned();
             } catch (SQLException e) {
@@ -89,9 +102,12 @@ public final class PostgresOutboxStore implements OutboxStore {
 
         String selectSql = "SELECT outbox_id, topic, message_key, message_type, payload, "
                 + "correlation_id, causation_id, created_at "
-                + "FROM outbox WHERE dispatched_at IS NULL "
+                + "FROM outbox WHERE dispatched_at IS NULL AND failed_at IS NULL "
                 + "ORDER BY created_at ASC LIMIT ? FOR UPDATE SKIP LOCKED";
         String markDispatchedSql = "UPDATE outbox SET dispatched_at = ? WHERE outbox_id = ?";
+        String incrementRetryCountSql = "UPDATE outbox SET retry_count = retry_count + 1, "
+                + "failed_at = CASE WHEN retry_count + 1 >= ? THEN now() ELSE NULL END "
+                + "WHERE outbox_id = ?";
 
         try (ManagedConnection managed = ManagedConnection.obtain(dataSource)) {
             Connection connection = managed.connection();
@@ -109,10 +125,11 @@ public final class PostgresOutboxStore implements OutboxStore {
                         }
                         dispatchedCount++;
                     } catch (Exception dispatchFailure) {
-                        // Per OutboxStore.claimAndDispatch javadoc: this record simply
-                        // stays undispatched for a future poll. The transaction is NOT
-                        // aborted - other already-successful records in this batch must
-                        // still commit.
+                        try (PreparedStatement retryStmt = connection.prepareStatement(incrementRetryCountSql)) {
+                            retryStmt.setInt(1, maxRetryCount);
+                            retryStmt.setObject(2, record.outboxId());
+                            retryStmt.executeUpdate();
+                        }
                         System.err.println("[WARN] Failed to dispatch outbox record "
                                 + record.outboxId() + ", will retry next poll: " + dispatchFailure);
                     }
