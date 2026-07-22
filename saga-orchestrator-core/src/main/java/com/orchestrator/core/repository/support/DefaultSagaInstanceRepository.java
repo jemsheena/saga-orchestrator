@@ -3,10 +3,13 @@ package com.orchestrator.core.repository.support;
 import com.orchestrator.core.engine.SagaInstance;
 import com.orchestrator.core.engine.SagaSnapshot;
 import com.orchestrator.core.event.SagaDomainEvent;
+import com.orchestrator.core.definition.SagaDefinition;
+import com.orchestrator.core.definition.TimeoutPolicy;
 import com.orchestrator.core.projection.SagaInstanceView;
 import com.orchestrator.core.projection.SagaInstanceViewStore;
 import com.orchestrator.core.projection.SagaProjector;
 import com.orchestrator.core.repository.EventMetadata;
+import com.orchestrator.core.repository.SagaDefinitionRegistry;
 import com.orchestrator.core.repository.SagaEventStore;
 import com.orchestrator.core.repository.SagaInstanceRepository;
 import com.orchestrator.core.repository.SagaSnapshotStore;
@@ -51,6 +54,7 @@ public final class DefaultSagaInstanceRepository implements SagaInstanceReposito
     private final SagaInstanceViewStore viewStore;
     private final SagaProjector projector;
     private final TransactionRunner transactionRunner;
+    private final SagaDefinitionRegistry sagaDefinitionRegistry;
     private final long snapshotIntervalEvents;
     private final int snapshotSchemaVersion;
 
@@ -59,6 +63,7 @@ public final class DefaultSagaInstanceRepository implements SagaInstanceReposito
                                           SagaInstanceViewStore viewStore,
                                           SagaProjector projector,
                                           TransactionRunner transactionRunner,
+                                          SagaDefinitionRegistry sagaDefinitionRegistry,
                                           long snapshotIntervalEvents,
                                           int snapshotSchemaVersion) {
         this.eventStore = Objects.requireNonNull(eventStore, "eventStore must not be null");
@@ -66,6 +71,7 @@ public final class DefaultSagaInstanceRepository implements SagaInstanceReposito
         this.viewStore = Objects.requireNonNull(viewStore, "viewStore must not be null");
         this.projector = Objects.requireNonNull(projector, "projector must not be null");
         this.transactionRunner = Objects.requireNonNull(transactionRunner, "transactionRunner must not be null");
+        this.sagaDefinitionRegistry = Objects.requireNonNull(sagaDefinitionRegistry, "sagaDefinitionRegistry must not be null");
         if (snapshotIntervalEvents < 1) {
             throw new IllegalArgumentException("snapshotIntervalEvents must be >= 1");
         }
@@ -134,6 +140,13 @@ public final class DefaultSagaInstanceRepository implements SagaInstanceReposito
 
         long versionBeforeThisBatch = instance.version() - newEvents.size();
 
+        SagaDefinition definition = sagaDefinitionRegistry
+                .resolve(instance.definitionReference())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Saga definition not found for saga " + instance.sagaId()
+                                + " with reference " + instance.definitionReference()));
+        TimeoutPolicy timeoutPolicy = definition.timeoutPolicy();
+
         // ATOMIC: event append and read-model projection succeed or fail together.
         // This is the actual fix for the Milestone 2 review's Critical Finding #1 -
         // previously these were two separately-committed operations. See class
@@ -141,7 +154,7 @@ public final class DefaultSagaInstanceRepository implements SagaInstanceReposito
         transactionRunner.runInTransaction(() -> {
             eventStore.append(instance.sagaId(), versionBeforeThisBatch, newEvents, metadata);
             for (SagaDomainEvent event : newEvents) {
-                projector.project(event, viewStore);
+                projector.project(event, viewStore, timeoutPolicy);
             }
         });
 

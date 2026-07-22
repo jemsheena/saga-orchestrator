@@ -1,6 +1,7 @@
 package com.orchestrator.core.projection;
 
 import com.orchestrator.core.engine.SagaState;
+import com.orchestrator.core.definition.TimeoutPolicy;
 import com.orchestrator.core.event.CompensationStepCompleted;
 import com.orchestrator.core.event.SagaCompensationStarted;
 import com.orchestrator.core.event.SagaCompleted;
@@ -12,6 +13,7 @@ import com.orchestrator.core.event.StepCompleted;
 import com.orchestrator.core.event.StepFailed;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 /**
@@ -34,17 +36,21 @@ import java.util.UUID;
 public final class SagaProjector {
 
     public void project(SagaDomainEvent event, SagaInstanceViewStore store) {
+        project(event, store, null);
+    }
+
+    public void project(SagaDomainEvent event, SagaInstanceViewStore store, TimeoutPolicy timeoutPolicy) {
         switch (event) {
             case SagaStarted e -> store.upsert(new SagaInstanceView(
                     e.sagaId(), e.definitionReference().sagaType(), SagaState.STARTED,
-                    0, e.occurredAt(), null, null, null, e.occurredAt(), null));
+                    0, e.occurredAt(), null, null, null, e.occurredAt(), computeTimeoutExpiredAt(e.occurredAt(), timeoutPolicy)));
 
             case StepCompleted e -> {
                 SagaInstanceView current = requireView(store, e.sagaId());
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), SagaState.STEP_COMPLETED,
                         e.stepIndex() + 1, current.startedAt(), null, null, current.lastError(),
-                        e.occurredAt(), current.timeoutExpiredAt()));
+                        e.occurredAt(), computeTimeoutExpiredAt(e.occurredAt(), timeoutPolicy)));
             }
 
             case SagaCompleted e -> {
@@ -64,7 +70,7 @@ public final class SagaProjector {
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), current.state(),
                         current.currentStepIndex(), current.startedAt(), current.completedAt(),
-                        current.durationMs(), e.reason(), e.occurredAt(), current.timeoutExpiredAt()));
+                        current.durationMs(), e.reason(), e.occurredAt(), computeTimeoutExpiredAt(e.occurredAt(), timeoutPolicy)));
             }
 
             case SagaCompensationStarted e -> {
@@ -72,7 +78,7 @@ public final class SagaProjector {
                 store.upsert(new SagaInstanceView(
                         current.sagaId(), current.sagaType(), SagaState.COMPENSATING,
                         current.currentStepIndex(), current.startedAt(), null, null, current.lastError(),
-                        e.occurredAt(), current.timeoutExpiredAt()));
+                        e.occurredAt(), null));
             }
 
             case CompensationStepCompleted e -> {
@@ -116,6 +122,13 @@ public final class SagaProjector {
                         + "SagaStarted must always be the first event projected for any saga — "
                         + "this indicates events are being projected out of order, or the view was "
                         + "corrupted/partially deleted."));
+    }
+
+    private Instant computeTimeoutExpiredAt(Instant lastActivityAt, TimeoutPolicy timeoutPolicy) {
+        if (timeoutPolicy == null || lastActivityAt == null) {
+            return null;
+        }
+        return lastActivityAt.plus(timeoutPolicy.timeoutDuration());
     }
 
     private long durationMillis(java.time.Instant startedAt, java.time.Instant endedAt) {

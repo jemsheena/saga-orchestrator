@@ -57,7 +57,9 @@ class SagaTimeoutSchedulerIntegrationTest extends AbstractPostgresIntegrationTes
         JdbcTransactionRunner transactionRunner = new JdbcTransactionRunner(dataSource);
 
         repository = new DefaultSagaInstanceRepository(
-                eventStore, snapshotStore, viewStore, new SagaProjector(), transactionRunner, 20, 1);
+                eventStore, snapshotStore, viewStore, new SagaProjector(), transactionRunner,
+                registry,
+                20, 1);
 
         scheduler = new SagaTimeoutScheduler(repository, registry, outboxStore, 100);
     }
