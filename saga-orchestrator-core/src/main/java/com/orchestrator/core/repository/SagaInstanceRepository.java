@@ -6,6 +6,7 @@ import com.orchestrator.core.projection.SagaInstanceView;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,6 +51,18 @@ public interface SagaInstanceRepository {
      *         not blindly retry the same call)
      */
     void save(SagaInstance instance, EventMetadata metadata);
+
+    /**
+     * Persists whatever pending domain events {@code instance} is currently
+     * holding, and runs additional work in the same transaction.
+     *
+     * <p>This is useful for appending outbox records atomically alongside
+     * the event append and read-model projection.
+     */
+    default void save(SagaInstance instance, EventMetadata metadata, Runnable additionalTransactionalWork) {
+        Objects.requireNonNull(additionalTransactionalWork, "additionalTransactionalWork must not be null");
+        save(instance, metadata);
+    }
 
     /**
      * Finds all non-terminal saga instances that are eligible for timeout

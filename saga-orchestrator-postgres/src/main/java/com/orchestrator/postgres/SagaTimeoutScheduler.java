@@ -160,37 +160,4 @@ public final class SagaTimeoutScheduler {
                 null,
                 Instant.now());
     }
-
-    /**
-     * Publishes a compensation marker to the outbox, following the same
-     * pattern as {@code SagaOrchestrator.publishCompensationIfNeeded()}.
-     *
-     * <p>The marker is a minimal record — the orchestrator and participants
-     * don't need the timeout details, only the fact that compensation is
-     * required. A real implementation might include the timeout deadline,
-     * step index, etc., for observability, but the minimum viable payload
-     * is sufficient for orchestration to proceed.
-     */
-    private void publishCompensationMarker(SagaInstance instance) {
-        // Construct a minimal marker. In a production system, you might want
-        // to include more context (timeout deadline, which step timed out, etc.)
-        // for observability. For now, an empty byte[] is sufficient for the
-        // orchestrator to know "compensation is required for this saga."
-        SagaReply marker = SagaReply.newBuilder()
-                .setEventId(UUID.randomUUID().toString())
-                .setSagaId(instance.sagaId().toString())
-                .setOutcome(SagaReply.Outcome.FAILURE)
-                .setReason("Saga execution exceeded timeout deadline")
-                .build();
-
-        outboxStore.append(new OutboxRecord(
-                UUID.randomUUID(),
-                "saga.compensation.v1",
-                instance.sagaId().toString(),
-                "SagaTimeoutNotification",
-                marker.toByteArray(),
-                UUID.randomUUID(), // new correlation ID for timeout event
-                null, // no causation ID (this is spontaneous, not driven by a request)
-                Instant.now()));
-    }
 }
