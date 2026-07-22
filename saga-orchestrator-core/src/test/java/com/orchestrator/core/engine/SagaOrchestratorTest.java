@@ -55,8 +55,30 @@ class SagaOrchestratorTest {
         RecordingOutboxStore outboxStore = new RecordingOutboxStore();
         InboxStore inboxStore = new InboxStore() {
             @Override
-            public boolean recordIfNew(UUID messageId) {
+            public boolean recordIfNew(UUID messageId, String consumer, String topic, String partitionKey) {
                 return true;
+            }
+
+            @Override
+            public boolean exists(UUID messageId, String consumer) {
+                return false;
+            }
+
+            @Override
+            public void save(com.orchestrator.messaging.inbox.InboxRecord record) {
+            }
+
+            @Override
+            public void markProcessed(UUID messageId, String consumer) {
+            }
+
+            @Override
+            public void markFailed(UUID messageId, String consumer) {
+            }
+
+            @Override
+            public Optional<com.orchestrator.messaging.inbox.InboxRecord> find(UUID messageId, String consumer) {
+                return Optional.empty();
             }
 
             @Override
@@ -107,8 +129,30 @@ class SagaOrchestratorTest {
         RecordingOutboxStore outboxStore = new RecordingOutboxStore();
         InboxStore inboxStore = new InboxStore() {
             @Override
-            public boolean recordIfNew(UUID messageId) {
+            public boolean recordIfNew(UUID messageId, String consumer, String topic, String partitionKey) {
                 return true;
+            }
+
+            @Override
+            public boolean exists(UUID messageId, String consumer) {
+                return false;
+            }
+
+            @Override
+            public void save(com.orchestrator.messaging.inbox.InboxRecord record) {
+            }
+
+            @Override
+            public void markProcessed(UUID messageId, String consumer) {
+            }
+
+            @Override
+            public void markFailed(UUID messageId, String consumer) {
+            }
+
+            @Override
+            public Optional<com.orchestrator.messaging.inbox.InboxRecord> find(UUID messageId, String consumer) {
+                return Optional.empty();
             }
 
             @Override
