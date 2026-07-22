@@ -7,6 +7,7 @@ import com.orchestrator.core.engine.SagaState;
 import com.orchestrator.core.event.SagaDomainEvent;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -138,6 +139,16 @@ class SagaProjectorTest {
         @Override
         public java.util.Optional<SagaInstanceView> findById(java.util.UUID sagaId) {
             return java.util.Optional.ofNullable(rows.get(sagaId));
+        }
+
+        @Override
+        public java.util.List<SagaInstanceView> findExpiredNonTerminal(int limit, Instant deadlineNow) {
+            return rows.values().stream()
+                    .filter(view -> view.state() != SagaState.COMPLETED && view.state() != SagaState.FAILED)
+                    .filter(view -> view.timeoutExpiredAt() != null && view.timeoutExpiredAt().isBefore(deadlineNow))
+                    .sorted((a, b) -> a.timeoutExpiredAt().compareTo(b.timeoutExpiredAt()))
+                    .limit(limit)
+                    .toList();
         }
     }
 }

@@ -11,6 +11,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,14 +43,16 @@ public final class PostgresSagaInstanceViewStore implements SagaInstanceViewStor
     public void upsert(SagaInstanceView view) {
         Objects.requireNonNull(view, "view must not be null");
         String sql = "INSERT INTO saga_instance_view "
-                + "(saga_id, saga_type, state, current_step_index, started_at, completed_at, duration_ms, last_error) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+                + "(saga_id, saga_type, state, current_step_index, started_at, completed_at, duration_ms, last_error, last_activity_at, timeout_expired_at) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                 + "ON CONFLICT (saga_id) DO UPDATE SET "
                 + "  state = EXCLUDED.state, "
                 + "  current_step_index = EXCLUDED.current_step_index, "
                 + "  completed_at = EXCLUDED.completed_at, "
                 + "  duration_ms = EXCLUDED.duration_ms, "
-                + "  last_error = EXCLUDED.last_error";
+                + "  last_error = EXCLUDED.last_error, "
+                + "  last_activity_at = EXCLUDED.last_activity_at, "
+                + "  timeout_expired_at = EXCLUDED.timeout_expired_at";
 
         try (ManagedConnection managed = ManagedConnection.obtain(dataSource)) {
             Connection connection = managed.connection();
@@ -64,6 +69,8 @@ public final class PostgresSagaInstanceViewStore implements SagaInstanceViewStor
                     stmt.setNull(7, Types.BIGINT);
                 }
                 stmt.setString(8, view.lastError());
+                stmt.setTimestamp(9, Timestamp.from(view.lastActivityAt()));
+                stmt.setTimestamp(10, view.timeoutExpiredAt() != null ? Timestamp.from(view.timeoutExpiredAt()) : null);
                 stmt.executeUpdate();
                 managed.commitIfOwned();
             } catch (SQLException e) {
@@ -78,7 +85,7 @@ public final class PostgresSagaInstanceViewStore implements SagaInstanceViewStor
     @Override
     public Optional<SagaInstanceView> findById(UUID sagaId) {
         Objects.requireNonNull(sagaId, "sagaId must not be null");
-        String sql = "SELECT saga_type, state, current_step_index, started_at, completed_at, duration_ms, last_error "
+        String sql = "SELECT saga_type, state, current_step_index, started_at, completed_at, duration_ms, last_error, last_activity_at, timeout_expired_at "
                 + "FROM saga_instance_view WHERE saga_id = ?";
 
         try (ManagedConnection managed = ManagedConnection.obtain(dataSource)) {
@@ -93,6 +100,7 @@ public final class PostgresSagaInstanceViewStore implements SagaInstanceViewStor
                         Timestamp completedAtTs = rs.getTimestamp("completed_at");
                         long durationMs = rs.getLong("duration_ms");
                         boolean durationWasNull = rs.wasNull();
+                        Timestamp timeoutExpiredAtTs = rs.getTimestamp("timeout_expired_at");
 
                         result = Optional.of(new SagaInstanceView(
                                 sagaId,
@@ -102,7 +110,9 @@ public final class PostgresSagaInstanceViewStore implements SagaInstanceViewStor
                                 rs.getTimestamp("started_at").toInstant(),
                                 completedAtTs != null ? completedAtTs.toInstant() : null,
                                 durationWasNull ? null : durationMs,
-                                rs.getString("last_error")));
+                                rs.getString("last_error"),
+                                rs.getTimestamp("last_activity_at").toInstant(),
+                                timeoutExpiredAtTs != null ? timeoutExpiredAtTs.toInstant() : null));
                     }
                     managed.commitIfOwned();
                     return result;
@@ -113,6 +123,56 @@ public final class PostgresSagaInstanceViewStore implements SagaInstanceViewStor
             }
         } catch (SQLException e) {
             throw new PostgresAdapterException("Failed to obtain connection to load view for " + sagaId, e);
+        }
+    }
+
+    @Override
+    public List<SagaInstanceView> findExpiredNonTerminal(int limit, Instant deadlineNow) {
+        Objects.requireNonNull(deadlineNow, "deadlineNow must not be null");
+        String sql = "SELECT saga_id, saga_type, state, current_step_index, started_at, completed_at, "
+                + "duration_ms, last_error, last_activity_at, timeout_expired_at "
+                + "FROM saga_instance_view "
+                + "WHERE state NOT IN ('COMPLETED', 'FAILED') "
+                + "  AND timeout_expired_at IS NOT NULL "
+                + "  AND timeout_expired_at < ? "
+                + "ORDER BY timeout_expired_at ASC "
+                + "LIMIT ? "
+                + "FOR UPDATE SKIP LOCKED";
+
+        List<SagaInstanceView> results = new ArrayList<>();
+        try (ManagedConnection managed = ManagedConnection.obtain(dataSource)) {
+            Connection connection = managed.connection();
+            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setTimestamp(1, Timestamp.from(deadlineNow));
+                stmt.setInt(2, limit);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    while (rs.next()) {
+                        Timestamp completedAtTs = rs.getTimestamp("completed_at");
+                        long durationMs = rs.getLong("duration_ms");
+                        boolean durationWasNull = rs.wasNull();
+                        Timestamp timeoutExpiredAtTs = rs.getTimestamp("timeout_expired_at");
+
+                        results.add(new SagaInstanceView(
+                                rs.getObject("saga_id", UUID.class),
+                                rs.getString("saga_type"),
+                                SagaState.valueOf(rs.getString("state")),
+                                rs.getInt("current_step_index"),
+                                rs.getTimestamp("started_at").toInstant(),
+                                completedAtTs != null ? completedAtTs.toInstant() : null,
+                                durationWasNull ? null : durationMs,
+                                rs.getString("last_error"),
+                                rs.getTimestamp("last_activity_at").toInstant(),
+                                timeoutExpiredAtTs != null ? timeoutExpiredAtTs.toInstant() : null));
+                    }
+                }
+                managed.commitIfOwned();
+                return results;
+            } catch (SQLException e) {
+                managed.rollbackIfOwned();
+                throw new PostgresAdapterException("Failed to query for expired non-terminal sagas", e);
+            }
+        } catch (SQLException e) {
+            throw new PostgresAdapterException("Failed to obtain connection to query for expired sagas", e);
         }
     }
 }
