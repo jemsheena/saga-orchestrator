@@ -1,230 +1,224 @@
 # Distributed Saga Orchestrator
 
-An event-sourced, CQRS-backed saga orchestration engine built in Java, designed to coordinate multi-step distributed transactions with automatic compensation on failure — without any participant service ever needing to know about the others.
+A production-grade Saga orchestration engine built in Java with event sourcing, CQRS, transactional outbox/inbox, retry/DLQ, timeout scheduling, and Kafka integration.
 
-> **Status:** Core domain model, PostgreSQL persistence, and the initial Milestone 3 payment participant integration are implemented and tested. The messaging layer now includes a transport-agnostic payment handler, inbox/outbox-backed reply flow, and a saga orchestrator boundary that advances saga state from participant replies — see [Current Implementation Status](#current-implementation-status) and [Roadmap](#roadmap).
+> **Status:** Production-grade Saga Orchestrator core implemented.
+>
+> Implemented:
+> - Event Sourcing
+> - CQRS
+> - DDD
+> - Hexagonal Architecture
+> - PostgreSQL Event Store
+> - Snapshotting
+> - Transactional Outbox
+> - Transactional Inbox
+> - Kafka Integration
+> - Retry Policies
+> - Dead Letter Queue
+> - Timeout Scheduler
+> - Metrics
+> - Integration Tests
+>
+> Current Focus:
+> - Serialization & Schema Evolution (Milestone 9)
 
-## Motivation
+## Why this project exists
 
-The Saga pattern is the standard answer to "how do you keep data consistent across multiple services without a distributed transaction," but most explanations stop at the sequence diagram. This project exists to actually build the hard, easy-to-get-wrong parts underneath that diagram:
+Distributed transactions are hard. The Saga pattern is the practical alternative to two-phase commit, but the hard part is building infrastructure that is safe, consistent, and observable.
 
-- What does it really mean for a workflow's state to be *derived* from its event history, rather than stored and overwritten?
-- How do you guarantee two concurrent writers can never silently corrupt the same in-flight saga?
-- How do you keep a read-optimized dashboard view consistent with a write-optimized event log, without introducing eventual-consistency bugs you can't reason about?
-- How do you version a long-running workflow definition without breaking sagas that are already mid-flight against an older version?
+This project focuses on the real implementation challenges:
 
-Every decision below is documented with the alternative that was considered and rejected, not just the one that was chosen — see [`docs/design-decisions.md`](./docs/design-decisions.md).
+- preserving saga state as immutable event history
+- making concurrent saga updates safe with optimistic locking
+- keeping a read-optimized view consistent with the write-side event log
+- handling retries, dead letters, and timeouts without corrupting workflow state
+- keeping participant services independent and stateless
 
-## Key Features
+## Core Features
 
-**Implemented:**
-- Event-sourced saga aggregate with a validated, exhaustively-checked state machine
-- Sealed, closed domain event vocabulary (compiler-enforced exhaustiveness, not a runtime assumption)
-- Optimistic concurrency control, verified under real concurrent load with multiple racing writer threads
-- CQRS: a denormalized, query-optimized read model kept transactionally consistent with the event log
-- Snapshotting for fast rehydration of long-running sagas, with schema-version-aware invalidation
-- Saga definition versioning — an in-flight saga always keeps executing against the exact definition version it started with, even if a newer version is deployed underneath it
-- A framework-free domain core (zero Spring/JDBC/Jackson dependency) backed by a PostgreSQL adapter module implementing every persistence port
-- 62 tests: 53 run with zero external dependencies; 9 are Testcontainers-backed integration tests against a real, ephemeral PostgreSQL instance
-- Payment participant domain, command handler, outbox-backed reply emission, and saga reply consumption via a new orchestrator boundary
+- Event Sourcing
+- CQRS
+- Domain-Driven Design (DDD)
+- Hexagonal Architecture
+- Optimistic Locking
+- Snapshotting
+- Transactional Outbox
+- Transactional Inbox
+- Kafka Integration
+- Retry Policies
+- Dead Letter Queue
+- Timeout Scheduler
+- PostgreSQL Adapter
+- Metrics
+- Testcontainers Integration
+- Java 21
 
-**Designed, not yet built** (see [Roadmap](#roadmap)):
-- Kafka-based command/reply messaging between the orchestrator and independent participant services
-- REST API, timeout handling, and distributed tracing across service boundaries
+## Planned Features
+
+- REST API layer
+- Distributed tracing / OpenTelemetry
+- Schema evolution tooling and upcasters
+- Production deployment documentation
+- Developer-facing sample application
 
 ## Architecture Overview
 
 ```mermaid
 flowchart TB
-    subgraph Core["saga-orchestrator-core (framework-free)"]
-        Instance["SagaInstance (aggregate root)\nevent-sourced, validated state machine"]
-        Projector["SagaProjector"]
-    end
+    Client["Client / API"]
+    Orchestrator["Saga Orchestrator"]
+    SagaAggregate["Saga Aggregate\n(SagaInstance)"]
+    EventStore["Event Store\n(Postgres)"]
+    SnapshotStore["Snapshot Store\n(Postgres)"]
+    Projection["Read Model Projection\n(Postgres)"]
+    Outbox["Transactional Outbox\n(Postgres)"]
+    Kafka["Kafka"]
+    Payment["Payment Service"]
+    Inventory["Inventory Service"]
+    Inbox["Transactional Inbox\n(Postgres)"]
 
-    subgraph PG["saga-orchestrator-postgres (adapter)"]
-        EventStoreImpl["PostgresSagaEventStore"]
-        SnapshotImpl["PostgresSagaSnapshotStore"]
-        ViewImpl["PostgresSagaInstanceViewStore"]
-    end
-
-    subgraph DB["PostgreSQL"]
-        EventTable[("saga_event\n(append-only, source of truth)")]
-        SnapshotTable[("saga_snapshot")]
-        ViewTable[("saga_instance_view\n(CQRS read model)")]
-    end
-
-    Instance --> Projector
-    Instance -.persists via.-> EventStoreImpl
-    Projector -.persists via.-> ViewImpl
-    Instance -.persists via.-> SnapshotImpl
-    EventStoreImpl --> EventTable
-    SnapshotImpl --> SnapshotTable
-    ViewImpl --> ViewTable
+    Client --> Orchestrator
+    Orchestrator --> SagaAggregate
+    SagaAggregate --> EventStore
+    SagaAggregate --> SnapshotStore
+    SagaAggregate --> Projection
+    SagaAggregate --> Outbox
+    Outbox --> Kafka
+    Kafka --> Payment
+    Kafka --> Inventory
+    Payment --> Inbox
+    Inventory --> Inbox
+    Inbox --> Orchestrator
 ```
 
-The domain module (`saga-orchestrator-core`) defines every persistence need as a plain Java interface — `SagaEventStore`, `SagaSnapshotStore`, `SagaInstanceViewStore`, `TransactionRunner` — and has no idea PostgreSQL exists. `saga-orchestrator-postgres` is the only module that does. This is Clean/Hexagonal Architecture applied literally: the entire domain model is unit-testable with pure in-memory fakes, and a different persistence technology would mean writing a new adapter, never touching the domain.
-
-Full diagrams (module dependencies, the saga state machine, the event-sourcing write path, CQRS flow, and optimistic concurrency) are in [`docs/architecture.md`](./docs/architecture.md).
+The core domain is framework-free. Adapters implement persistence and messaging without leaking infrastructure into the domain layer.
 
 ## Technology Stack
 
 | Layer | Technology |
 |---|---|
 | Language | Java 21 |
-| Build | Gradle (Kotlin DSL) |
-| Domain persistence (write side) | PostgreSQL — hand-rolled event store, no ORM |
-| Serialization | Hand-written JSON serializer (JSONB payload column) |
-| Testing | JUnit 5, Testcontainers (PostgreSQL) |
-| Planned (Milestone 3) | Apache Kafka, Protobuf, Spring Boot |
-
-No ORM is used on the write side deliberately — an event-sourced append-only log and a JPA-style entity-mapping tool solve different problems, and forcing the former through the latter tends to fight the tool rather than use it.
+| Build | Gradle |
+| Persistence | PostgreSQL |
+| Messaging | Kafka |
+| Metrics | Micrometer |
+| Testing | JUnit 5, Testcontainers |
+| Serialization | Jackson |
+| Architecture | DDD, CQRS, Hexagonal Architecture |
+| Containerization | Docker |
 
 ## Project Structure
 
 ```
 saga-orchestrator/
-├── saga-orchestrator-core/       Framework-free domain model (see docs/module-overview.md)
-├── saga-orchestrator-postgres/   PostgreSQL adapter implementing the core's persistence ports
-├── docs/
-│   ├── architecture.md           Mermaid diagrams: system, modules, state machine, event flow, CQRS
-│   ├── design-decisions.md       Every significant decision, with rejected alternatives
-│   ├── module-overview.md        Package-by-package breakdown of both modules
-│   └── roadmap.md                Implemented vs. planned, including the approved Milestone 3 design
-├── .github/                      CI workflow, issue templates, PR template
-├── settings.gradle.kts
+├── saga-orchestrator-core/       Core domain model and saga engine
+├── saga-orchestrator-postgres/   PostgreSQL persistence adapters
+├── saga-orchestrator-messaging/  Messaging, outbox/inbox, Kafka adapters
+├── participant-payment-service/ Payment participant reference implementation
+├── docs/                        Architecture, design decisions, roadmap
 ├── LICENSE
-└── CONTRIBUTING.md
+├── CONTRIBUTING.md
+├── settings.gradle.kts
+└── gradlew*
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- JDK 21
-- Docker (only required to run the PostgreSQL integration test suite via Testcontainers — the domain model's unit tests need nothing beyond the JDK)
-- A Gradle wrapper is not currently checked into this repository (see [Manual Steps](#manual-steps-before-publishing) below for how to add one) — a local Gradle 8.x install works in the meantime.
-
-### Build and test
+## Quick Start
 
 ```bash
-git clone https://github.com/jemsheena/saga-orchestrator.git
 cd saga-orchestrator
-
-# Run the framework-free domain model's unit tests (no Docker required)
-gradle :saga-orchestrator-core:test
-
-# Run the PostgreSQL adapter's tests, including Testcontainers integration tests
-# (requires a local Docker daemon)
-gradle :saga-orchestrator-postgres:test
-
-# Build everything
-gradle build
+./gradlew :saga-orchestrator-core:test
+./gradlew :saga-orchestrator-postgres:test
+./gradlew build
 ```
 
-## Example Workflow
+> Windows: use `gradlew.bat`
 
-The snippet below shows the full lifecycle this repository actually implements today: defining a saga, starting an instance, advancing it through steps, and persisting it with full concurrency protection. (There is no REST API yet — this is the programmatic core API a future REST/Kafka layer will sit on top of.)
+## Example Usage
+
+This repository currently exposes a programmatic saga engine and persistence plumbing. A future API layer will build on top of these primitives.
 
 ```java
-// 1. Define the workflow once, at startup
 SagaDefinition orderFulfillment = SagaDefinition.builder("OrderFulfillment")
         .addStep(new SagaStep("ChargePayment", "ChargePaymentCommand", "RefundPaymentCommand"))
         .addStep(new SagaStep("ReserveInventory", "ReserveInventoryCommand", "ReleaseInventoryCommand"))
-        .addStep(new SagaStep("ShipOrder", "ShipOrderCommand", null)) // not compensatable
+        .addStep(new SagaStep("ShipOrder", "ShipOrderCommand", null))
         .build();
 
 registry.register(orderFulfillment);
 
-// 2. Start a new instance
 SagaInstance saga = SagaInstance.start(orderFulfillment);
 repository.save(saga, EventMetadata.newCorrelation());
 
-// 3. Report step outcomes as participants respond
 SagaInstance loaded = repository.findById(saga.sagaId()).orElseThrow();
 loaded.completeCurrentStep(orderFulfillment, "ChargePayment");
 repository.save(loaded, EventMetadata.newCorrelation());
-
-// 4. A later step fails -> automatic compensation kicks in
-SagaInstance midFlight = repository.findById(saga.sagaId()).orElseThrow();
-midFlight.failCurrentStep(orderFulfillment, "ShipOrder", "Carrier API timeout");
-repository.save(midFlight, EventMetadata.newCorrelation());
-// state is now COMPENSATING; compensationCursor points at "ReserveInventory" to undo next
 ```
 
-Every one of these calls appends immutable events, keeps `saga_instance_view` transactionally in sync, and enforces optimistic concurrency automatically — none of that is visible at this call site, which is the point.
+## Implemented Architecture
 
-## Inbox / Exactly-once Processing
+This project currently implements:
 
-The inbox layer in this repository is implemented in `saga-orchestrator-messaging`.
-It is designed to make Kafka's inherently at-least-once delivery behave like exactly-once
-from the application's perspective.
-
-- `InboxStore` is the durable deduplication and processing-state store.
-- `InboxProcessor` wraps a business handler with an atomic inbox lifecycle:
-  1. record message as received,
-  2. execute the handler inside a transaction,
-  3. mark the message processed or failed.
-- `InboxKafkaConsumer` wires Kafka delivery into `InboxProcessor` and commits offsets
-  only after the processor completes successfully.
-- Duplicate deliveries are detected by `InboxStore.recordIfNew(...)`.
-  The first successful delivery is processed; later duplicates are skipped.
-- Postgres implementation uses `INSERT ... ON CONFLICT DO NOTHING` for safe,
-  concurrent deduplication during consumer rebalance and redelivery.
-
-### Example inbox wiring
-
-```java
-InboxStore inboxStore = new PostgresInboxStore(dataSource);
-TransactionRunner transactionRunner = new PostgresMessagingTransactionRunner(dataSource);
-
-InboxMessageHandler<byte[]> businessHandler = (payload, headers) -> {
-    // decode the reply payload, update saga state, and persist any outgoing effects
-};
-
-try (InboxKafkaConsumer consumer = new InboxKafkaConsumer(
-        bootstrapServers,
-        "payment-reply-group",
-        List.of("payment.replies.v1"),
-        inboxStore,
-        "payment-reply-consumer",
-        bytes -> UUID.nameUUIDFromBytes(bytes),
-        businessHandler,
-        transactionRunner,
-        new SimpleMeterRegistry())) {
-    consumer.start();
-    // keep the JVM alive while consuming
-}
-```
+- Event Sourcing with immutable domain events
+- CQRS with a write-side event log and read-side projection
+- DDD aggregate consistency and business-rule encapsulation
+- Hexagonal Architecture with clear ports/adapters
+- Optimistic concurrency control in the event store
+- Snapshotting for fast saga recovery
+- Transactional outbox for dual-write safety
+- Transactional inbox for deduplicated message handling
+- Kafka integration for distributed participant communication
+- Retry policies and dead-letter queue support
+- Timeout scheduler support for long-running workflows
 
 ## Current Implementation Status
 
 | Component | Status |
 |---|---|
-| Saga domain model (definitions, steps, state machine) | ✅ Implemented, unit tested |
-| Domain events + event sourcing | ✅ Implemented, unit tested |
-| PostgreSQL event store, optimistic concurrency | ✅ Implemented, integration tested |
-| CQRS read model + synchronous projection | ✅ Implemented, integration tested |
-| Snapshotting | ✅ Implemented, unit + integration tested |
-| REST API | ❌ Not implemented |
-| Kafka messaging / Outbox / Inbox | ✅ Implemented for messaging abstractions and end-to-end reply ingestion |
-| Participant services (payment, inventory, shipping) | ⚠️ Payment participant implemented; inventory/shipping remain planned |
-| Distributed tracing | ❌ Not implemented |
+| Event Sourcing | ✅ |
+| CQRS | ✅ |
+| PostgreSQL Event Store | ✅ |
+| Snapshotting | ✅ |
+| Outbox Pattern | ✅ |
+| Inbox Pattern | ✅ |
+| Kafka Integration | ✅ |
+| Retry Policy | ✅ |
+| Dead Letter Queue | ✅ |
+| Timeout Scheduler | ✅ |
+| Metrics | ✅ |
+| Integration Tests | ✅ |
+| REST API | ❌ |
+| Distributed Tracing | ❌ |
+| Schema Evolution | 🚧 |
 
 ## Roadmap
 
-See [`docs/roadmap.md`](./docs/roadmap.md) for the full, detailed roadmap, including the reviewed and approved Kafka messaging architecture for Milestone 3 (topology, partitioning strategy, Outbox/Inbox design, timeout handling) — none of which is implemented yet, but all of which has already been through a design review.
+- ✅ Milestone 1 — Core Event Sourcing
+- ✅ Milestone 2 — CQRS
+- ✅ Milestone 3 — Saga Engine
+- ✅ Milestone 4 — Timeout Scheduler
+- ✅ Milestone 5 — Transactional Outbox
+- ✅ Milestone 6 — Transactional Inbox
+- ✅ Milestone 7 — Retry & Dead Letter Queue
+- ✅ Milestone 8 — Snapshotting
+- 🚧 Milestone 9 — Serialization & Schema Evolution
 
-## Future Improvements
+Planned beyond Milestone 9:
+- OpenTelemetry / distributed tracing
+- Production hardening and operational documentation
+- Developer-facing REST/Kafka service layer
 
-- Kafka-based distributed messaging between orchestrator and participants (Milestone 3)
-- REST API for starting/querying sagas
-- OpenTelemetry distributed tracing across service boundaries
-- A read-only dashboard service querying the CQRS view
+## Documentation
+
+- [`docs/architecture.md`](./docs/architecture.md)
+- [`docs/design-decisions.md`](./docs/design-decisions.md)
+- [`docs/roadmap.md`](./docs/roadmap.md)
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 
 ## Contributing
 
-Contributions, issues, and design critiques are welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+Contributions are welcome. Please open issues for bugs, improvements, or questions, and follow the conventions in `CONTRIBUTING.md`.
 
 ## License
 
-Licensed under the [MIT License](./LICENSE).
+Licensed under the MIT License. See `LICENSE`.
