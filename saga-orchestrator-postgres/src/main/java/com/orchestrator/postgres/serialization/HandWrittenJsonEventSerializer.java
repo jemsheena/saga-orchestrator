@@ -38,6 +38,7 @@ import java.util.UUID;
 public final class HandWrittenJsonEventSerializer implements SagaEventSerializer {
 
     private static final int CURRENT_SCHEMA_VERSION = 1;
+    private static final String CONTENT_TYPE = "application/vnd.orchestrator.event+json";
 
     @Override
     public String eventType(SagaDomainEvent event) {
@@ -50,7 +51,12 @@ public final class HandWrittenJsonEventSerializer implements SagaEventSerializer
     }
 
     @Override
-    public String serialize(SagaDomainEvent event) {
+    public String contentType() {
+        return CONTENT_TYPE;
+    }
+
+    @Override
+    public byte[] serialize(SagaDomainEvent event) {
         SimpleJson.Writer w = new SimpleJson.Writer();
         w.field("sagaId", event.sagaId().toString());
         w.field("occurredAt", event.occurredAt().toString());
@@ -76,11 +82,11 @@ public final class HandWrittenJsonEventSerializer implements SagaEventSerializer
                 // no additional fields
             }
         }
-        return w.build();
+        return w.build().getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @Override
-    public SagaDomainEvent deserialize(String eventType, int schemaVersion, String json) {
+    public SagaDomainEvent deserialize(String eventType, int schemaVersion, String contentType, byte[] payload) {
         if (schemaVersion != CURRENT_SCHEMA_VERSION) {
             // See SagaEventSerializer javadoc: a real multi-version implementation
             // would branch here to upcast an older shape. Nothing to upcast from yet.
@@ -88,7 +94,12 @@ public final class HandWrittenJsonEventSerializer implements SagaEventSerializer
                     "Unsupported schema version " + schemaVersion + " for event type " + eventType
                             + " — no upcaster registered for this version.");
         }
+        if (contentType != null && !contentType.equals(CONTENT_TYPE)) {
+            throw new IllegalArgumentException(
+                    "Unsupported content type " + contentType + " for event type " + eventType);
+        }
 
+        String json = new String(payload, java.nio.charset.StandardCharsets.UTF_8);
         Map<String, String> fields = SimpleJson.parseFlatObject(json);
         UUID sagaId = UUID.fromString(fields.get("sagaId"));
         Instant occurredAt = Instant.parse(fields.get("occurredAt"));

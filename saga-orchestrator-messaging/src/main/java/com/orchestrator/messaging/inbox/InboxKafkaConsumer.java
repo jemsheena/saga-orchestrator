@@ -42,8 +42,24 @@ public final class InboxKafkaConsumer implements MessageConsumer, AutoCloseable 
                               TransactionRunner transactionRunner,
                               MeterRegistry meterRegistry) {
         this.consumer = new KafkaMessageConsumer(bootstrapServers, groupId, topics,
-                new InboxProcessor(inboxStore, consumerId, messageIdExtractor, handler, transactionRunner, meterRegistry));
+            new InboxProcessor(inboxStore, consumerId, messageIdExtractor, handler, transactionRunner, meterRegistry));
     }
+
+        public InboxKafkaConsumer(String bootstrapServers,
+                      String groupId,
+                      List<String> topics,
+                      InboxStore inboxStore,
+                      String consumerId,
+                      Function<byte[], UUID> messageIdExtractor,
+                      InboxMessageHandler<byte[]> handler,
+                      TransactionRunner transactionRunner,
+                      MeterRegistry meterRegistry,
+                      com.orchestrator.messaging.inbox.RetryPolicy retryPolicy,
+                      com.orchestrator.messaging.inbox.DeadLetterPublisher deadLetterPublisher) {
+        this.consumer = new KafkaMessageConsumer(bootstrapServers, groupId, topics,
+            new com.orchestrator.messaging.inbox.InboxProcessor(inboxStore, consumerId, messageIdExtractor,
+                handler, transactionRunner, meterRegistry, retryPolicy, deadLetterPublisher));
+        }
 
     @Override
     public void start() {

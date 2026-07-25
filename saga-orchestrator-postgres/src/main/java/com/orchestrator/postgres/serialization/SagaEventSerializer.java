@@ -28,7 +28,12 @@ public interface SagaEventSerializer {
      */
     int schemaVersion(SagaDomainEvent event);
 
-    String serialize(SagaDomainEvent event);
+    /**
+     * The MIME-type-like content type for serialized payloads produced by this serializer.
+     */
+    String contentType();
+
+    byte[] serialize(SagaDomainEvent event);
 
     /**
      * @param eventType     as returned by {@link #eventType}, read back from storage
@@ -36,7 +41,9 @@ public interface SagaEventSerializer {
      *                      an implementation supporting multiple historical shapes for the
      *                      same eventType would branch on this to "upcast" older payloads;
      *                      this milestone's implementation only ever has one shape per type
-     * @param json          the raw stored payload
+     * @param contentType   the stored payload content type; implementations should support
+     *                      {@code null} for legacy rows persisted before content type metadata existed.
+     * @param payload       the raw stored payload bytes.
      */
-    SagaDomainEvent deserialize(String eventType, int schemaVersion, String json);
+    SagaDomainEvent deserialize(String eventType, int schemaVersion, String contentType, byte[] payload);
 }

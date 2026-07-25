@@ -82,6 +82,15 @@ class SagaOrchestratorTest {
             }
 
             @Override
+            public void updateRetryMetadata(UUID messageId, String consumer, int retryCount, String lastFailure, Instant lastAttempt, Instant nextRetryTime) {
+            }
+
+            @Override
+            public java.util.List<com.orchestrator.messaging.inbox.InboxRecord> findDueForRetry(Instant atOrBefore, int limit) {
+                return java.util.Collections.emptyList();
+            }
+
+            @Override
             public int cleanup(java.time.Instant olderThan, int limit) {
                 return 0;
             }
@@ -153,6 +162,15 @@ class SagaOrchestratorTest {
             @Override
             public Optional<com.orchestrator.messaging.inbox.InboxRecord> find(UUID messageId, String consumer) {
                 return Optional.empty();
+            }
+
+            @Override
+            public void updateRetryMetadata(UUID messageId, String consumer, int retryCount, String lastFailure, Instant lastAttempt, Instant nextRetryTime) {
+            }
+
+            @Override
+            public java.util.List<com.orchestrator.messaging.inbox.InboxRecord> findDueForRetry(Instant atOrBefore, int limit) {
+                return java.util.Collections.emptyList();
             }
 
             @Override

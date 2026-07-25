@@ -1,5 +1,6 @@
 plugins {
     java
+    id("com.google.protobuf") version "0.9.4"
 }
 
 group = "com.orchestrator"
@@ -46,6 +47,14 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers-postgresql:$testcontainersVersion")
     testImplementation("org.testcontainers:testcontainers-kafka:$testcontainersVersion")
     testImplementation("org.postgresql:postgresql:42.7.4")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.3"
+    }
 }
 
 tasks.test {

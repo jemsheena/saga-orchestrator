@@ -22,6 +22,7 @@ repositories {
 dependencies {
     implementation(project(":saga-orchestrator-messaging"))
     implementation("com.google.protobuf:protobuf-java:3.25.3")
+    implementation("io.micrometer:micrometer-core:1.12.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

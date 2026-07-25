@@ -26,7 +26,7 @@ public final class InMemoryInboxStore implements InboxStore {
             return false;
         }
         records.put(key, new InboxRecord(messageId, consumer, topic, partitionKey,
-                Instant.now(), null, InboxStatus.RECEIVED));
+            Instant.now(), null, InboxStatus.RECEIVED, 0, null, null, null, null, null));
         return true;
     }
 
@@ -37,7 +37,7 @@ public final class InMemoryInboxStore implements InboxStore {
 
     @Override
     public synchronized void save(InboxRecord record) {
-        records.putIfAbsent(compositeKey(record.messageId(), record.consumer()), record);
+        records.put(compositeKey(record.messageId(), record.consumer()), record);
     }
 
     @Override
@@ -45,8 +45,9 @@ public final class InMemoryInboxStore implements InboxStore {
         String key = compositeKey(messageId, consumer);
         InboxRecord record = records.get(key);
         if (record != null) {
-            records.put(key, new InboxRecord(record.messageId(), record.consumer(), record.topic(), record.partitionKey(),
-                    record.receivedAt(), Instant.now(), InboxStatus.PROCESSED));
+                records.put(key, new InboxRecord(record.messageId(), record.consumer(), record.topic(), record.partitionKey(),
+                    record.receivedAt(), Instant.now(), InboxStatus.PROCESSED,
+                    record.retryCount(), record.lastFailure(), record.lastAttempt(), record.nextRetryTime(), record.payload(), record.headers()));
         }
     }
 
@@ -55,14 +56,34 @@ public final class InMemoryInboxStore implements InboxStore {
         String key = compositeKey(messageId, consumer);
         InboxRecord record = records.get(key);
         if (record != null) {
-            records.put(key, new InboxRecord(record.messageId(), record.consumer(), record.topic(), record.partitionKey(),
-                    record.receivedAt(), null, InboxStatus.FAILED));
+                records.put(key, new InboxRecord(record.messageId(), record.consumer(), record.topic(), record.partitionKey(),
+                    record.receivedAt(), null, InboxStatus.FAILED,
+                    record.retryCount(), record.lastFailure(), record.lastAttempt(), record.nextRetryTime(), record.payload(), record.headers()));
         }
     }
 
     @Override
     public synchronized Optional<InboxRecord> find(UUID messageId, String consumer) {
         return Optional.ofNullable(records.get(compositeKey(messageId, consumer)));
+    }
+
+    @Override
+    public synchronized void updateRetryMetadata(UUID messageId, String consumer, int retryCount, String lastFailure, Instant lastAttempt, Instant nextRetryTime) {
+        String key = compositeKey(messageId, consumer);
+        InboxRecord record = records.get(key);
+        if (record != null) {
+                records.put(key, new InboxRecord(record.messageId(), record.consumer(), record.topic(), record.partitionKey(),
+                    record.receivedAt(), record.processedAt(), record.status(), retryCount, lastFailure, lastAttempt, nextRetryTime, record.payload(), record.headers()));
+        }
+    }
+
+    @Override
+    public synchronized java.util.List<InboxRecord> findDueForRetry(Instant atOrBefore, int limit) {
+        return records.values().stream()
+                .filter(r -> r.status() == InboxStatus.FAILED && r.nextRetryTime() != null && !r.nextRetryTime().isAfter(atOrBefore))
+                .sorted(java.util.Comparator.comparing(r -> r.nextRetryTime()))
+                .limit(limit)
+                .toList();
     }
 
     @Override

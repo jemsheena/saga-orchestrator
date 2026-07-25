@@ -109,4 +109,29 @@ public final class PostgresSagaSnapshotStore implements SagaSnapshotStore {
             throw new PostgresAdapterException("Failed to load latest snapshot for saga " + sagaId, e);
         }
     }
+
+    @Override
+    public int purgeExceptLatest(UUID sagaId, int keepLatest) {
+        Objects.requireNonNull(sagaId);
+        if (keepLatest < 0) throw new IllegalArgumentException("keepLatest must be >= 0");
+        if (keepLatest == 0) {
+            String del = "DELETE FROM saga_snapshot WHERE saga_id = ?";
+            try (Connection c = dataSource.getConnection(); PreparedStatement ps = c.prepareStatement(del)) {
+                ps.setObject(1, sagaId);
+                return ps.executeUpdate();
+            } catch (SQLException e) {
+                throw new PostgresAdapterException("Failed to purge snapshots for saga " + sagaId, e);
+            }
+        }
+        String sql = "DELETE FROM saga_snapshot WHERE saga_id = ? AND sequence_no NOT IN (" +
+                "SELECT sequence_no FROM saga_snapshot WHERE saga_id = ? ORDER BY sequence_no DESC LIMIT ?)";
+        try (Connection c = dataSource.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setObject(1, sagaId);
+            ps.setObject(2, sagaId);
+            ps.setInt(3, keepLatest);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new PostgresAdapterException("Failed to purge snapshots for saga " + sagaId, e);
+        }
+    }
 }

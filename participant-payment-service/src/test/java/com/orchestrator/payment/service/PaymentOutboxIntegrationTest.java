@@ -52,6 +52,15 @@ class PaymentOutboxIntegrationTest {
             }
 
             @Override
+            public void updateRetryMetadata(UUID messageId, String consumer, int retryCount, String lastFailure, java.time.Instant lastAttempt, java.time.Instant nextRetryTime) {
+            }
+
+            @Override
+            public java.util.List<com.orchestrator.messaging.inbox.InboxRecord> findDueForRetry(java.time.Instant atOrBefore, int limit) {
+                return java.util.Collections.emptyList();
+            }
+
+            @Override
             public int cleanup(java.time.Instant olderThan, int limit) {
                 return 0;
             }

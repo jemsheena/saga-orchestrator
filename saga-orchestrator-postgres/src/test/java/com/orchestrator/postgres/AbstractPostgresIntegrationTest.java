@@ -1,9 +1,9 @@
 package com.orchestrator.postgres;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Assumptions;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.DockerClientFactory;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -24,19 +24,23 @@ import java.sql.Statement;
  * run {@code ./gradlew :saga-orchestrator-postgres:test} locally with Docker
  * available to execute them.
  */
-@Testcontainers
 abstract class AbstractPostgresIntegrationTest {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("saga_orchestrator_test")
-            .withUsername("test")
-            .withPassword("test");
+    static PostgreSQLContainer<?> POSTGRES = null;
 
     static DataSource dataSource;
 
     @BeforeAll
     static void setUpSchema() throws Exception {
+        // Skip all Postgres integration tests when Docker is not available.
+        Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable(), "Docker not available - skipping Postgres integration tests");
+
+        POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
+                .withDatabaseName("saga_orchestrator_test")
+                .withUsername("test")
+                .withPassword("test");
+        POSTGRES.start();
+
         dataSource = new SimpleDataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
         try (Connection connection = dataSource.getConnection()) {
             runScript(connection, "/db/migration/V1__event_store.sql");

@@ -27,16 +27,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * itself isn't compilable in that sandbox either — see
  * {@code KafkaProducerConfig}'s sandbox note).
  */
-@Testcontainers
 class KafkaPublishConsumeIntegrationTest {
-
-    @Container
-    static final KafkaContainer KAFKA = new KafkaContainer("apache/kafka:3.7.0");
 
     private static final String TOPIC = "test.messages.v1";
 
     @Test
     void publishedMessage_isConsumedWithPayloadAndHeadersIntact() throws InterruptedException {
+        if (!org.testcontainers.DockerClientFactory.instance().isDockerAvailable()) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Docker not available - skipping integration test");
+        }
+        try (org.testcontainers.kafka.KafkaContainer KAFKA = new org.testcontainers.kafka.KafkaContainer("apache/kafka:3.7.0")) {
+            KAFKA.start();
         UUID correlationId = UUID.randomUUID();
         UUID causationId = UUID.randomUUID();
         byte[] payload = "hello saga orchestrator".getBytes(StandardCharsets.UTF_8);
@@ -60,15 +61,21 @@ class KafkaPublishConsumeIntegrationTest {
             }
 
             assertTrue(received.await(30, TimeUnit.SECONDS), "message was not consumed in time");
-        }
 
-        assertEquals(new String(payload, StandardCharsets.UTF_8), new String(receivedPayload.get(), StandardCharsets.UTF_8));
-        assertEquals(correlationId, receivedHeaders.get().correlationId());
-        assertEquals(causationId, receivedHeaders.get().causationId());
+            assertEquals(new String(payload, StandardCharsets.UTF_8), new String(receivedPayload.get(), StandardCharsets.UTF_8));
+            assertEquals(correlationId, receivedHeaders.get().correlationId());
+            assertEquals(causationId, receivedHeaders.get().causationId());
+            }
+        }
     }
 
     @Test
     void publishedMessage_withNoCausationId_consumesWithNullCausationId() throws InterruptedException {
+        if (!org.testcontainers.DockerClientFactory.instance().isDockerAvailable()) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Docker not available - skipping integration test");
+        }
+        try (org.testcontainers.kafka.KafkaContainer KAFKA = new org.testcontainers.kafka.KafkaContainer("apache/kafka:3.7.0")) {
+            KAFKA.start();
         UUID correlationId = UUID.randomUUID();
         AtomicReference<MessageHeaders> receivedHeaders = new AtomicReference<>();
         CountDownLatch received = new CountDownLatch(1);
@@ -87,9 +94,10 @@ class KafkaPublishConsumeIntegrationTest {
             }
 
             assertTrue(received.await(30, TimeUnit.SECONDS));
-        }
 
-        assertEquals(correlationId, receivedHeaders.get().correlationId());
-        assertNull(receivedHeaders.get().causationId());
+            assertEquals(correlationId, receivedHeaders.get().correlationId());
+            assertNull(receivedHeaders.get().causationId());
+            }
+        }
     }
 }

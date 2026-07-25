@@ -1,0 +1,69 @@
+syntax = "proto3";
+package com.orchestrator.postgres.serialization;
+
+option java_package = "com.orchestrator.postgres.serialization.proto";
+option java_outer_classname = "SagaEventProto";
+
+message SagaEvent {
+    oneof event {
+        SagaStarted saga_started = 1;
+        StepCompleted step_completed = 2;
+        SagaCompleted saga_completed = 3;
+        StepFailed step_failed = 4;
+        SagaCompensationStarted saga_compensation_started = 5;
+        CompensationStepCompleted compensation_step_completed = 6;
+        SagaFailed saga_failed = 7;
+        SagaTimedOut saga_timed_out = 8;
+    }
+}
+
+message SagaStarted {
+    string sagaId = 1;
+    string sagaType = 2;
+    int32 definitionVersion = 3;
+    string timeoutDuration = 4;
+    string occurredAt = 5;
+}
+
+message StepCompleted {
+    string sagaId = 1;
+    string stepName = 2;
+    int32 stepIndex = 3;
+    string occurredAt = 4;
+}
+
+message SagaCompleted {
+    string sagaId = 1;
+    string occurredAt = 2;
+}
+
+message StepFailed {
+    string sagaId = 1;
+    string stepName = 2;
+    int32 stepIndex = 3;
+    string reason = 4;
+    string occurredAt = 5;
+}
+
+message SagaCompensationStarted {
+    string sagaId = 1;
+    int32 compensationCursor = 2;
+    string occurredAt = 3;
+}
+
+message CompensationStepCompleted {
+    string sagaId = 1;
+    string stepName = 2;
+    int32 compensationCursor = 3;
+    string occurredAt = 4;
+}
+
+message SagaFailed {
+    string sagaId = 1;
+    string occurredAt = 2;
+}
+
+message SagaTimedOut {
+    string sagaId = 1;
+    string occurredAt = 2;
+}

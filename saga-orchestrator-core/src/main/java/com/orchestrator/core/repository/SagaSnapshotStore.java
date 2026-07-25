@@ -31,4 +31,11 @@ public interface SagaSnapshotStore {
      *         see {@code SagaSnapshot.schemaVersion()}).
      */
     Optional<SagaSnapshot> findLatest(UUID sagaId);
+
+    /**
+     * Purge stored snapshots for a saga, keeping only the latest {@code keepLatest}
+     * entries. Default no-op; implementations may override to provide cleanup.
+     * @return number of rows deleted, or 0 if not supported
+     */
+    default int purgeExceptLatest(UUID sagaId, int keepLatest) { return 0; }
 }

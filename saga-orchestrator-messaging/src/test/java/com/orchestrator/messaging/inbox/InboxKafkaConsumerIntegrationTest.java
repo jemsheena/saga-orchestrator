@@ -19,16 +19,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Testcontainers
 class InboxKafkaConsumerIntegrationTest {
-
-    @Container
-    static final KafkaContainer KAFKA = new KafkaContainer("apache/kafka:3.7.0");
 
     private static final String TOPIC = "test.inbox.v1";
 
     @Test
     void inboxKafkaConsumer_processesMessageAndIgnoresDuplicate() throws InterruptedException {
+        if (!org.testcontainers.DockerClientFactory.instance().isDockerAvailable()) {
+            org.junit.jupiter.api.Assumptions.assumeTrue(false, "Docker not available - skipping integration test");
+        }
+        try (org.testcontainers.kafka.KafkaContainer KAFKA = new org.testcontainers.kafka.KafkaContainer("apache/kafka:3.7.0")) {
+            KAFKA.start();
         UUID payloadId = UUID.randomUUID();
         byte[] payload = String.format("{\"id\":\"%s\",\"value\":\"hello\"}", payloadId)
                 .getBytes(StandardCharsets.UTF_8);
@@ -71,10 +72,11 @@ class InboxKafkaConsumerIntegrationTest {
 
             // allow the duplicate to be consumed and detected by the inbox processor
             Thread.sleep(1500);
-        }
 
-        assertEquals(1, handledCount.get(), "Duplicate message should not be reprocessed");
-        assertTrue(inboxStore.find(expectedMessageId, "inbox-consumer").isPresent());
-        assertEquals(InboxStatus.PROCESSED, inboxStore.find(expectedMessageId, "inbox-consumer").get().status());
+            assertEquals(1, handledCount.get(), "Duplicate message should not be reprocessed");
+            assertTrue(inboxStore.find(expectedMessageId, "inbox-consumer").isPresent());
+            assertEquals(InboxStatus.PROCESSED, inboxStore.find(expectedMessageId, "inbox-consumer").get().status());
+            }
+        }
     }
 }

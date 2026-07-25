@@ -72,6 +72,16 @@ public interface InboxStore {
     Optional<InboxRecord> find(UUID messageId, String consumer);
 
     /**
+     * Update retry metadata for the specified inbox entry.
+     */
+    void updateRetryMetadata(UUID messageId, String consumer, int retryCount, String lastFailure, Instant lastAttempt, Instant nextRetryTime);
+
+    /**
+     * Find records that are due for retry at or before the supplied time.
+     */
+    java.util.List<InboxRecord> findDueForRetry(Instant atOrBefore, int limit);
+
+    /**
      * Remove processed inbox records older than the supplied cutoff time.
      *
      * @return the number of records deleted

@@ -114,20 +114,22 @@ public final class PostgresSagaEventStore implements SagaEventStore {
     private void insertEvents(Connection connection, UUID sagaId, long expectedVersion,
                                List<SagaDomainEvent> newEvents, EventMetadata metadata) throws SQLException {
         String sql = "INSERT INTO saga_event "
-                + "(event_id, saga_id, sequence_no, event_type, event_schema_version, payload, "
+                + "(event_id, saga_id, sequence_no, event_type, event_schema_version, payload, payload_content_type, "
                 + " occurred_at, correlation_id, causation_id) "
-                + "VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             long sequenceNo = expectedVersion + 1;
             for (SagaDomainEvent event : newEvents) {
+                byte[] payload = serializer.serialize(event);
                 stmt.setObject(1, UUID.randomUUID());
                 stmt.setObject(2, sagaId);
                 stmt.setLong(3, sequenceNo);
                 stmt.setString(4, serializer.eventType(event));
                 stmt.setInt(5, serializer.schemaVersion(event));
-                stmt.setObject(6, serializer.serialize(event), Types.OTHER);
-                stmt.setTimestamp(7, Timestamp.from(event.occurredAt()));
-                stmt.setObject(8, metadata.correlationId());
+                stmt.setBytes(6, payload);
+                stmt.setString(7, serializer.contentType());
+                stmt.setTimestamp(8, Timestamp.from(event.occurredAt()));
+                stmt.setObject(9, metadata.correlationId());
 
                 // Milestone 2.5 fix (Important Finding #5): explicit setNull rather than
                 // setObject(idx, null), matching the correct pattern already used in
@@ -135,9 +137,9 @@ public final class PostgresSagaEventStore implements SagaEventStore {
                 // correctly infer SQL NULL from a null Object reference for a UUID column
                 // is driver-behavior-dependent rather than guaranteed by the JDBC contract.
                 if (metadata.causationId() != null) {
-                    stmt.setObject(9, metadata.causationId());
+                    stmt.setObject(10, metadata.causationId());
                 } else {
-                    stmt.setNull(9, Types.OTHER);
+                    stmt.setNull(10, Types.OTHER);
                 }
 
                 stmt.addBatch();
@@ -155,7 +157,7 @@ public final class PostgresSagaEventStore implements SagaEventStore {
     @Override
     public List<SagaDomainEvent> loadEvents(UUID sagaId, long afterSequenceNo) {
         Objects.requireNonNull(sagaId, "sagaId must not be null");
-        String sql = "SELECT event_type, event_schema_version, payload "
+        String sql = "SELECT event_type, event_schema_version, payload, payload_content_type "
                 + "FROM saga_event WHERE saga_id = ? AND sequence_no > ? ORDER BY sequence_no ASC";
 
         try (ManagedConnection managed = ManagedConnection.obtain(dataSource)) {
@@ -169,8 +171,9 @@ public final class PostgresSagaEventStore implements SagaEventStore {
                     while (rs.next()) {
                         String eventType = rs.getString("event_type");
                         int schemaVersion = rs.getInt("event_schema_version");
-                        String payload = rs.getString("payload");
-                        events.add(serializer.deserialize(eventType, schemaVersion, payload));
+                        byte[] payload = rs.getBytes("payload");
+                        String contentType = rs.getString("payload_content_type");
+                        events.add(serializer.deserialize(eventType, schemaVersion, contentType, payload));
                     }
                 }
                 managed.commitIfOwned(); // read-only, but keeps an owned connection's transaction state clean

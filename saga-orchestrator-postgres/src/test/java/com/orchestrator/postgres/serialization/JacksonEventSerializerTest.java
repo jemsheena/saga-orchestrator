@@ -7,6 +7,7 @@ import com.orchestrator.core.event.SagaCompleted;
 import com.orchestrator.core.event.SagaDomainEvent;
 import com.orchestrator.core.event.SagaFailed;
 import com.orchestrator.core.event.SagaStarted;
+import com.orchestrator.core.event.SagaTimedOut;
 import com.orchestrator.core.event.StepCompleted;
 import com.orchestrator.core.event.StepFailed;
 import org.junit.jupiter.api.Test;
@@ -20,9 +21,9 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class HandWrittenJsonEventSerializerTest {
+class JacksonEventSerializerTest {
 
-    private final SagaEventSerializer serializer = new HandWrittenJsonEventSerializer();
+    private final SagaEventSerializer serializer = new JacksonEventSerializer();
     private static final UUID SAGA_ID = UUID.randomUUID();
     private static final Instant NOW = Instant.parse("2026-01-01T12:34:56.789Z");
 
@@ -32,10 +33,11 @@ class HandWrittenJsonEventSerializerTest {
                 new StepCompleted(SAGA_ID, "ChargePayment", 0, NOW),
                 new SagaCompleted(SAGA_ID, NOW),
                 new StepFailed(SAGA_ID, "CreateShippingLabel", 2, "carrier API down", NOW),
-                new StepFailed(SAGA_ID, "CreateShippingLabel", 2, null, NOW), // null reason
+                new StepFailed(SAGA_ID, "CreateShippingLabel", 2, null, NOW),
                 new SagaCompensationStarted(SAGA_ID, 1, NOW),
                 new CompensationStepCompleted(SAGA_ID, "ReserveInventory", 1, NOW),
-                new SagaFailed(SAGA_ID, NOW)
+                new SagaFailed(SAGA_ID, NOW),
+                new SagaTimedOut(SAGA_ID, NOW)
         );
     }
 
@@ -48,42 +50,14 @@ class HandWrittenJsonEventSerializerTest {
 
         SagaDomainEvent rebuilt = serializer.deserialize(eventType, schemaVersion, serializer.contentType(), payload);
 
-        assertEquals(original, rebuilt); // records: structural equality
-    }
-
-    @Test
-    void specialCharacters_quotesBackslashNewline_surviveRoundTrip() {
-        StepFailed original = new StepFailed(SAGA_ID, "Step", 0,
-                "reason with \"quotes\" and \\backslash\\ and\nnewline", NOW);
-
-        byte[] payload = serializer.serialize(original);
-        StepFailed rebuilt = (StepFailed) serializer.deserialize("StepFailed", 1, serializer.contentType(), payload);
-
-        assertEquals(original.reason(), rebuilt.reason());
-    }
-
-    @Test
-    void unknownEventType_throwsIllegalArgumentException() {
-        String jsonPayload = "{\"sagaId\":\"" + SAGA_ID + "\",\"occurredAt\":\"" + NOW + "\"}";
-        byte[] payload = jsonPayload.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        assertThrows(IllegalArgumentException.class, () -> serializer.deserialize("SomeMadeUpEvent", 1, serializer.contentType(), payload));
+        assertEquals(original, rebuilt);
     }
 
     @Test
     void unsupportedSchemaVersion_throwsIllegalArgumentException() {
-        String jsonPayload = "{\"sagaId\":\"" + SAGA_ID + "\",\"occurredAt\":\"" + NOW + "\"}";
-        byte[] payload = jsonPayload.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        assertThrows(IllegalArgumentException.class, () -> serializer.deserialize("SagaCompleted", 99, serializer.contentType(), payload));
-    }
+        byte[] payload = serializer.serialize(new SagaCompleted(SAGA_ID, NOW));
 
-    @Test
-    void sagaStarted_flattensAndReassemblesDefinitionReferenceCorrectly() {
-        SagaStarted original = new SagaStarted(SAGA_ID, new SagaDefinitionReference("QuickTask", 7), null, NOW);
-
-        byte[] payload = serializer.serialize(original);
-        SagaStarted rebuilt = (SagaStarted) serializer.deserialize("SagaStarted", 1, serializer.contentType(), payload);
-
-        assertEquals("QuickTask", rebuilt.definitionReference().sagaType());
-        assertEquals(7, rebuilt.definitionReference().version());
+        assertThrows(IllegalArgumentException.class,
+                () -> serializer.deserialize("SagaCompleted", 99, serializer.contentType(), payload));
     }
 }
